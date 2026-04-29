@@ -29,9 +29,26 @@
 <hr>
 
 ### To-Do List
+#### Implementation
+Atleast 4 of these:
+- [ ] Array
+- [ ] Queue
+- [ ] Stack
+- [ ] Linked-List
+- [ ] Tree
+- [ ] Sorting
+- [ ] Searching
+- [x] Framework {Raylib}
+#### Post Implementation
+##### Team Portfolio
+- [ ] Video (Documentation, Reflections)
+- [ ] Front Page, Intro, Objectives & Ideation
+- [ ] Methodology, Implementation, Results
+- [ ] Challenges and Solution, Conclusion
 
-- [ ] Framework
-- [ ] Portfolio
-- [ ] Video
+##### Report
+- [ ] File(Include Evaluation Form)
+- [ ] Rename and Zip
+
 
 _please add more tasks_
