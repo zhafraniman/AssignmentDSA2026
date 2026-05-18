@@ -11,7 +11,7 @@ int main() {
     GameMap worldMap;        
     worldMap.LoadMap("src/levels/level1.txt"); 
     
-    Player myPlayer(400.0f, 300.0f); // Starting Point
+    Player myPlayer(388.0f, 256.0f); // Starting Point
     GameState currentState = STATE_OVERWORLD;
 
     while (!WindowShouldClose()) {
