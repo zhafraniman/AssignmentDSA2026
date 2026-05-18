@@ -69,3 +69,8 @@ void Player::Draw() {
     // DEBUGGING: PLAYER HITBOX
      DrawRectangleLinesEx(GetBounds(), 1, RED);
 }
+
+void Player::Teleport(float newX, float newY) {
+    position.x = newX;
+    position.y = newY;
+}

@@ -3,48 +3,117 @@
 #include <iostream>
 
 GameMap::GameMap() {
-    // Fill with empty space by default
     for (int y = 0; y < MAP_ROWS; y++) {
         for (int x = 0; x < MAP_COLS; x++) {
             grid[y][x] = 0;
         }
     }
-
-    // LOAD THE SPRITE: Sends the wall image to your graphics card
     wallSprite = LoadTexture("src/sprite/wall.png"); 
+    
+    portalSprite = LoadTexture("src/sprite/door.png");
+    // NEW: Initialize our manual counter to 0
+    portalCount = 0; 
 }
 
-// THE DESTRUCTOR: Runs automatically when the map is destroyed
 GameMap::~GameMap() {
     UnloadTexture(wallSprite); 
+    UnloadTexture(portalSprite);
 }
 
-// MAP PARSER
 bool GameMap::LoadMap(const std::string& filename) {
-    // Open the file
     std::ifstream file(filename);
 
-    // Safety Check: Did the file actually open?
     if (!file.is_open()) {
         std::cout << "ERROR: Could not load map file: " << filename << std::endl;
         return false;
     }
 
-    // Read the numbers into the grid
+    // REPLACED: portals.clear();
+    // Setting the counter to 0 makes the engine overwrite old portals automatically!
+    portalCount = 0; 
+
     for (int y = 0; y < MAP_ROWS; y++) {
         for (int x = 0; x < MAP_COLS; x++) {
-            file >> grid[y][x]; // The >> operator automatically skips spaces and newlines
+            file >> grid[y][x]; 
         }
     }
 
-    // Close the file (free up system memory)
+    std::string marker;
+    if (file >> marker && marker == "PORTALS") {
+        int numPortals;
+        file >> numPortals; 
+        
+        for (int i = 0; i < numPortals; i++) {
+            int gridX, gridY, spawnGridX, spawnGridY;
+            std::string target;
+            
+            file >> gridX >> gridY >> target >> spawnGridX >> spawnGridY;
+            
+            float pixelX = gridX * TILE_SIZE;
+            float pixelY = gridY * TILE_SIZE;
+            float spawnPixelX = spawnGridX * TILE_SIZE;
+            float spawnPixelY = spawnGridY * TILE_SIZE;
+            
+            AddPortal({pixelX, pixelY, TILE_SIZE, TILE_SIZE}, target, spawnPixelX, spawnPixelY);
+        }
+    }
+
     file.close();
-    std::cout << "SUCCESS: Loaded map: " << filename << std::endl;
     return true;
 }
 
+void GameMap::AddPortal(Rectangle bounds, std::string targetMap, float spawnX, float spawnY) {
+    // REPLACED: portals.push_back(...)
+    // Ensure we don't exceed our hardcoded array limit!
+    if (portalCount < MAX_PORTALS) {
+        Portal newPortal;
+        newPortal.bounds = bounds;
+        newPortal.targetMap = targetMap;
+        newPortal.spawnX = spawnX;
+        newPortal.spawnY = spawnY;
+
+        // Slot the new portal into the array at the current count, then increment the count
+        portals[portalCount] = newPortal;
+        portalCount++;
+    } else {
+        std::cout << "WARNING: Max portals reached. Cannot add more!" << std::endl;
+    }
+}
+
+bool GameMap::CheckPortals(Rectangle playerBounds, Portal& outPortal) {
+    // REPLACED: portals.size() with our manual portalCount
+    for (int i = 0; i < portalCount; i++) {
+        if (CheckCollisionRecs(playerBounds, portals[i].bounds)) {
+            outPortal = portals[i];
+            return true; 
+        }
+    }
+    return false; 
+}
+
+void GameMap::Draw() {
+    // 1. Draw the walls
+    for (int y = 0; y < MAP_ROWS; y++) {
+        for (int x = 0; x < MAP_COLS; x++) {
+            if (grid[y][x] == 1) {
+                DrawTexture(wallSprite, x * TILE_SIZE, y * TILE_SIZE, WHITE);
+            }
+        }
+    }
+
+    // 2. Draw the portals
+    for (int i = 0; i < portalCount; i++) {
+        // We cast the float coordinates back to integers (int) for pixel-perfect drawing
+        int drawX = (int)portals[i].bounds.x;
+        int drawY = (int)portals[i].bounds.y;
+        
+        // Stamp the portal sprite onto the screen!
+        DrawTexture(portalSprite, drawX, drawY, WHITE);
+    }
+}
+
 bool GameMap::IsSolid(int targetX, int targetY) {
-    // BOUNDS CHECK: Prevent the game from crashing if we check outside the screen
+    // BOUNDS CHECK: Prevent crashing if checking outside the screen
     if (targetX < 0 || targetX >= MAP_COLS || targetY < 0 || targetY >= MAP_ROWS) {
         return true; 
     }
@@ -54,22 +123,11 @@ bool GameMap::IsSolid(int targetX, int targetY) {
         return true;
     }
 
-    return false; // The space is safe to walk on
+    return false; 
 }
 
-void GameMap::Draw() {
-    for (int y = 0; y < MAP_ROWS; y++) {
-        for (int x = 0; x < MAP_COLS; x++) {
-            if (grid[y][x] == 1) {
-                // WHITE means "draw the image with its original colors"
-                DrawTexture(wallSprite, x * TILE_SIZE, y * TILE_SIZE, WHITE);
-            }
-        }
-    }
-}
-
-// Convert the pixel boundaries of the bounding box into grid rows and columns
 bool GameMap::CheckCollision(Rectangle rect) {
+    // Convert the pixel boundaries of the bounding box into grid rows and columns
     int startCol = (int)(rect.x / TILE_SIZE);
     int endCol = (int)((rect.x + rect.width) / TILE_SIZE);
     int startRow = (int)(rect.y / TILE_SIZE);
@@ -79,9 +137,9 @@ bool GameMap::CheckCollision(Rectangle rect) {
     for (int row = startRow; row <= endRow; row++) {
         for (int col = startCol; col <= endCol; col++) {
             if (IsSolid(col, row)) {
-                return true; // At least one tile we are touching is solid
+                return true; // Hit a wall!
             }
         }
     }
-    return false; // Free space
+    return false; // Safe to walk
 }

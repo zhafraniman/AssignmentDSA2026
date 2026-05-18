@@ -24,6 +24,8 @@ public:
     void Update(GameMap& map);
     void Draw();
     Rectangle GetBounds() const;
+    // Add this inside the public section of your Player class
+    void Teleport(float newX, float newY);
 
     // Getters - Read-only access to private variables
     std::string GetName() const { return name; }
