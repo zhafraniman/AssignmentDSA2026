@@ -33,7 +33,6 @@
 
 ### To-Do List
 
-### Jira: https://asyraafdaniel06.atlassian.net/jira/software/projects/KAN/boards/2?atlOrigin=eyJpIjoiZjU3YzliNjU2NDA4NDQ2MDhiY2YwYjIwM2M5YTAyZjMiLCJwIjoiaiJ9
 #### Implementation
 Atleast 4 of these:
 - [x] Array
