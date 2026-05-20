@@ -1,3 +1,23 @@
-all:
-	g++ main.cpp player.cpp renderer.cpp dialogue.cpp map.cpp -o game -I/c/raylib/raylib/include -L/c/raylib/raylib/lib -lraylib -lopengl32 -lgdi32 -lwinmm -static-libgcc -static-libstdc++
+# Variables
+CXX = g++
+SRCS = main.cpp player.cpp renderer.cpp dialogue.cpp map.cpp
 
+# Linux Output and Flags
+LINUX_OUT = game
+LINUX_FLAGS = -lraylib
+
+# Windows Output and Flags
+WIN_OUT = game.exe
+WIN_FLAGS = -I/c/raylib/raylib/include -L/c/raylib/raylib/lib -lraylib -lopengl32 -lgdi32 -lwinmm -static-libgcc -static-libstdc++
+
+# Main Compiling
+all: linux windows
+
+linux: 
+	$(CXX) $(SRCS) -o $(LINUX_OUT) $(LINUX_FLAGS)
+
+windows: 
+	$(CXX) $(SRCS) -o $(WIN_OUT) $(WIN_FLAGS)
+
+clean:
+	rm -f $(LINUX_OUT) $(WIN_OUT)

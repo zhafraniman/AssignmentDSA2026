@@ -3,7 +3,7 @@
 # Project Planned: ---
 
 > [!IMPORTANT]
-> **If you are on linux (no .exe extensions), make a ```/build``` folders and compile the code to that folder. ```.gitignore``` will ignore that folder**
+> **Use ```make windows```, ```make linux``` to compile the code**
 
 ### Rules
 
@@ -33,7 +33,6 @@
 
 ### To-Do List
 
-### Jira: https://asyraafdaniel06.atlassian.net/jira/software/projects/KAN/boards/2?atlOrigin=eyJpIjoiZjU3YzliNjU2NDA4NDQ2MDhiY2YwYjIwM2M5YTAyZjMiLCJwIjoiaiJ9
 #### Implementation
 Atleast 4 of these:
 - [x] Array
@@ -63,7 +62,7 @@ _please add more tasks_
 
 - raylib
 - C++
-- 
+
 <hr>
 
 ### Idea
@@ -72,4 +71,4 @@ _please add more tasks_
 - Similar battle structure as pokemon (linked-list)
 - Path finding (searching)
 - Pixel art graphics
-test
+- Worldbuilding
