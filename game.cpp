@@ -35,6 +35,13 @@ void Game::Update() {
     switch (currentState) {
         case STATE_OVERWORLD: {
             myPlayer.Update(worldMap, playerInput);
+            worldMap.UpdateEnemies(myPlayer.GetBounds());
+
+            Enemy* touchedEnemy = worldMap.CheckEnemyCollision(myPlayer.GetBounds());
+            if (touchedEnemy != nullptr) {
+                currentEnemy = touchedEnemy; // Remember who we are fighting
+                currentState = STATE_BATTLE;
+            }
 
             // CHEST LOGIC
             if (IsKeyPressed(KEY_E)) {
@@ -87,7 +94,21 @@ void Game::Update() {
             break;
             
         case STATE_BATTLE:
-            if (IsKeyPressed(KEY_ESCAPE)) currentState = STATE_OVERWORLD;
+            if (IsKeyPressed(KEY_K)) {
+                worldMap.MarkEnemyDefeated(currentEnemy);
+                currentEnemy = nullptr; // Clear the memory
+                currentState = STATE_OVERWORLD;
+            }
+    
+            // If you FLEE from the enemy (Press ESC)
+            if (IsKeyPressed(KEY_ESCAPE)) {
+                // We DON'T mark them defeated. 
+                currentEnemy->bounds.x = currentEnemy->spawnX;
+                currentEnemy->bounds.y = currentEnemy->spawnY;
+                myPlayer.Teleport(myPlayer.GetBounds().x, myPlayer.GetBounds().y + 50); 
+                currentEnemy = nullptr;
+                currentState = STATE_OVERWORLD;
+            }
             break;
     }
 }

@@ -25,4 +25,7 @@ private:
     DialogueBox dialogueBox;
     GameState currentState;
     Vector2 playerInput;
+
+    Enemy* currentEnemy;
 };
+

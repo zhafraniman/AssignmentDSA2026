@@ -57,7 +57,7 @@ void Renderer::DrawOverworld(Player& player, GameMap& map) {
 // UNFINISHED
 void Renderer::DrawBattle() {
     DrawRectangle(600, 100, 64, 64, EnemyColor); 
-    DrawText("BATTLE ENGAGED! Press 'ESC' to flee.", 200, 250, 20, RAYWHITE);
+    DrawText("BATTLE ENGAGED! Press K to kill, ESC to escape.", 200, 250, 20, RAYWHITE);
 }
 
 void Renderer::DrawGrid() {
