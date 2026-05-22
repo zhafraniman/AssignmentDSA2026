@@ -1,9 +1,11 @@
+#include <string>
 #include "raylib.h"
 #include "config.h"
 #include "player.h"
 #include "renderer.h"
 #include "map.h"
 #include "dialogue.h"
+#include <fstream>
 
 int main() {
     Renderer gameRenderer;   
@@ -16,6 +18,11 @@ int main() {
     GameState currentState = STATE_OVERWORLD;
 
     DialogueBox dialogueBox;
+	std::ifstream inputFile("usersfile.txt");
+	int fileScore;
+	inputFile>>fileScore;
+	inputFile.close();
+	std::ofstream outputFile("usersfile.txt", std::ios::out);
 
     while (!WindowShouldClose()) {
         switch (currentState) {
@@ -34,6 +41,7 @@ int main() {
                             if (myPlayer.AddItem(nearbyChest->content)) {
                                 worldMap.MarkChestOpened(nearbyChest); 
                                 std::cout << "[PLAYER] Picked up item! Chest opened." << std::endl;
+				fileScore=fileScore+10;
                     
                                 // Success! Modify the chest directly in memory to mark it empty
                                 nearbyChest->isOpen = true; 
@@ -117,6 +125,14 @@ int main() {
         
         // 1. Let your custom Renderer draw the map, the player, the menu, or the battle!
         gameRenderer.DrawFrame(currentState, myPlayer, worldMap);
+	for(int h=0;h<2;h++){
+		for(int w=0;w<2;w++){
+			DrawRectangle(50 + w*50, 50 + h*50, 50, 50, YELLOW);
+		}
+	}
+
+	DrawRectangleLines(50, 50 , 100, 100, BLACK);
+	DrawText(std::to_string(fileScore).c_str(), 55, 60, 50, BLACK);
 
         // 2. Draw the Dialogue UI on the very top of whatever the renderer just painted.
         // (dialogueBox.Draw() already checks if it is active, so it's safe to just call it here)
@@ -124,5 +140,6 @@ int main() {
 
         EndDrawing();
     }
+    	outputFile<<fileScore;
     return 0;
 }
