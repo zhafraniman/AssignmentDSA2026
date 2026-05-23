@@ -48,6 +48,11 @@ struct Enemy {
     float spawnY;
 };
 
+struct Point2D {
+    int x;
+    int y;
+};
+
 class GameMap {
 private:
     int grid[MAP_ROWS][MAP_COLS];
@@ -73,6 +78,7 @@ private:
     int enemyCount;
     int defeatedHistory[MAX_ENEMY_HISTORY];
     int defeatedCount;
+    bool isAggro;
 
 public:
     GameMap();
@@ -97,6 +103,7 @@ public:
     void UpdateEnemies(Rectangle playerBounds);
     Enemy* CheckEnemyCollision(Rectangle playerBounds);
     void MarkEnemyDefeated(Enemy* enemy);
+    Point2D GetNextPathStep(int startX, int startY, int targetX, int targetY);
 };
 
 #endif

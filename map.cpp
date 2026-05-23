@@ -276,7 +276,6 @@ void GameMap::Draw() {
 
     // Draw the signpost
     for (int i = 0; i < signpostCount; i++) {
-        
         // Grab the exact X and Y pixel coordinates, casting them to integers for the screen
         int drawX = (int)signposts[i].bounds.x;
         int drawY = (int)signposts[i].bounds.y;
@@ -294,6 +293,9 @@ void GameMap::Draw() {
         
         // Stamp the custom enemy sprite onto the screen
         DrawTexture(enemySprite, drawX, drawY, WHITE);
+        if (isAggro) {
+            DrawTexture(enemySprite, drawX, drawY, RED);
+        }
 
         // Debugging
         DrawRectangleLinesEx(enemies[i].bounds, 1, RED);
@@ -415,30 +417,37 @@ void GameMap::UpdateEnemies(Rectangle playerBounds) {
         
         // 2. Are they inside the aggro range? CHASE!
         if (totalDistance < enemies[i].aggroRange) {
+            isAggro = true;
             
-            // --- VECTOR NORMALIZATION EXPLANATION ---
-            // We can't just add 'distanceX' to the enemy's position, because if the player 
-            // is 200 pixels away, the enemy would move 200 pixels in one frame (teleporting).
-            // Normalizing means we shrink the distance down to a direction of exactly '1', 
-            // and then multiply it by the enemy's speed so they move smoothly.
-            float directionX = distanceX / totalDistance;
-            float directionY = distanceY / totalDistance;
-            
-            enemies[i].bounds.x += directionX * enemies[i].speed * deltaTime;
-            if (CheckCollision(enemies[i].bounds)) {
-                // If hitting a wall, backtrack the exact amount we just moved
-                enemies[i].bounds.x -= directionX * enemies[i].speed * deltaTime; 
-            }
+            int enemyGridX = (int)(enemyCenterX / TILE_SIZE);
+            int enemyGridY = (int)(enemyCenterY / TILE_SIZE);
+            int playerGridX = (int)(playerCenterX / TILE_SIZE);
+            int playerGridY = (int)(playerCenterY / TILE_SIZE);
 
-            enemies[i].bounds.y += directionY * enemies[i].speed * deltaTime;
-            if (CheckCollision(enemies[i].bounds)) {
-                // If hitting a wall, backtrack the exact amount we just moved
-                enemies[i].bounds.y -= directionY * enemies[i].speed * deltaTime; 
+            // Ask the Pathfinder where to go next!
+            Point2D nextStep = GetNextPathStep(enemyGridX, enemyGridY, playerGridX, playerGridY);
+
+            // Convert the target Grid Tile back into exactly the center pixels
+            float targetPixelX = (nextStep.x * TILE_SIZE) + (TILE_SIZE / 2.0f);
+            float targetPixelY = (nextStep.y * TILE_SIZE) + (TILE_SIZE / 2.0f);
+
+            // Now do standard vector math aiming at the target tile instead of the player!
+            float stepDistX = targetPixelX - enemyCenterX;
+            float stepDistY = targetPixelY - enemyCenterY;
+            float stepTotalDist = sqrt((stepDistX * stepDistX) + (stepDistY * stepDistY));
+
+            if (stepTotalDist > 2.0f) { // Prevent jittering when reaching the exact center
+                float dirX = stepDistX / stepTotalDist;
+                float dirY = stepDistY / stepTotalDist;
+
+                enemies[i].bounds.x += dirX * enemies[i].speed * deltaTime;
+                if (CheckCollision(enemies[i].bounds)) enemies[i].bounds.x -= dirX * enemies[i].speed * deltaTime;
+
+                enemies[i].bounds.y += dirY * enemies[i].speed * deltaTime;
+                if (CheckCollision(enemies[i].bounds)) enemies[i].bounds.y -= dirY * enemies[i].speed * deltaTime;
             }
-            
-            // Optional: You could add map.CheckCollision() here for the enemy 
-            // so they don't walk through walls while chasing!
         } else {
+            isAggro = false;
             // --- THE WALK BACK HOME LOGIC ---
             
             // 1. Calculate the distance from the enemy's CURRENT position to its SPAWN position
@@ -487,4 +496,69 @@ void GameMap::MarkEnemyDefeated(Enemy* enemy) {
         defeatedHistory[defeatedCount] = enemy->uniqueID;
         defeatedCount++;
     }
+}
+
+Point2D GameMap::GetNextPathStep(int startX, int startY, int targetX, int targetY) {
+    // 1. The Custom Queue (Max size is grid width * height)
+    Point2D queue[MAP_ROWS * MAP_COLS];
+    int front = 0;
+    int back = 0;
+
+    // 2. Memory Arrays (To remember where we walked)
+    bool visited[MAP_ROWS][MAP_COLS] = {false};
+    Point2D parent[MAP_ROWS][MAP_COLS]; // Remembers "who" walked onto this tile
+
+    // Setup the starting point
+    queue[back] = {startX, startY};
+    back++;
+    visited[startY][startX] = true;
+    parent[startY][startX] = {-1, -1}; // The start has no parent
+
+    // Directions: Up, Down, Left, Right
+    int dx[] = {0, 0, -1, 1};
+    int dy[] = {-1, 1, 0, 0};
+
+    bool found = false;
+
+    // 3. The Search Loop
+    while (front < back) {
+        Point2D current = queue[front];
+        front++; // Dequeue the first item
+
+        // Did we find the player's tile?
+        if (current.x == targetX && current.y == targetY) {
+            found = true;
+            break;
+        }
+
+        // Look at all 4 neighbor tiles
+        for (int i = 0; i < 4; i++) {
+            int nx = current.x + dx[i];
+            int ny = current.y + dy[i];
+
+            // Bounds check & wall check
+            if (nx >= 0 && nx < MAP_COLS && ny >= 0 && ny < MAP_ROWS) {
+                if (grid[ny][nx] != 1 && !visited[ny][nx]) {
+                    visited[ny][nx] = true;         // Mark as seen
+                    parent[ny][nx] = current;       // Draw an arrow back to where we came from
+                    
+                    queue[back] = {nx, ny};         // Enqueue this new tile to check later
+                    back++;
+                }
+            }
+        }
+    }
+
+    // If the player is surrounded by walls and unreachable, just stand still
+    if (!found) return {startX, startY}; 
+
+    // 4. Backtracking: Trace the arrows backward from the player to the enemy
+    Point2D step = {targetX, targetY};
+    
+    // Keep stepping backward until the tile we are standing on is exactly one step away from the enemy's start
+    while (parent[step.y][step.x].x != startX || parent[step.y][step.x].y != startY) {
+        step = parent[step.y][step.x];
+    }
+
+    return step; // This is the immediate next tile the enemy must walk to!
 }
