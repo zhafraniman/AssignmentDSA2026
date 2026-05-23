@@ -1,7 +1,7 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 #include "raylib.h"
-#include <iostream>
+#include <string>
 
 #define TILE_SIZE 32
 #define SCREEN_WIDTH 800

@@ -21,15 +21,15 @@ Player::~Player() {
     UnloadTexture(sprite); 
 }
 
-void Player::Update(GameMap& map) {
-    float deltaTime = GetFrameTime();
-    Vector2 moveAmount = { 0.0f, 0.0f };
+// Change the function signature in player.h to accept the input direction:
+// void Update(GameMap& map, Vector2 inputDirection);
 
-    // EVENT HANDLER
-    if (IsKeyDown(KEY_W) || IsKeyDown(KEY_UP)) moveAmount.y -= 1.0f;
-    if (IsKeyDown(KEY_S) || IsKeyDown(KEY_DOWN)) moveAmount.y += 1.0f;
-    if (IsKeyDown(KEY_A) || IsKeyDown(KEY_LEFT)) moveAmount.x -= 1.0f;
-    if (IsKeyDown(KEY_D) || IsKeyDown(KEY_RIGHT)) moveAmount.x += 1.0f;
+void Player::Update(GameMap& map, Vector2 inputDirection) {
+    float deltaTime = GetFrameTime();
+    
+    // We no longer ask Raylib for keyboard input here! 
+    // We trust whatever the engine tells us the player wants to do.
+    Vector2 moveAmount = inputDirection;
 
     // Continuous Diagonal Normalization
     if (moveAmount.x != 0.0f && moveAmount.y != 0.0f) {

@@ -34,6 +34,25 @@ struct Signpost {
     int lineCount;
 };
 
+#define MAX_ENEMIES 10
+#define MAX_ENEMY_HISTORY 100
+struct Enemy {
+    Rectangle bounds;
+    int uniqueID;
+    float speed;
+    int aggroRange; // How close before it chases you?
+    bool isDefeated;
+    
+    // We need to remember where they spawned so they can return if you flee
+    float spawnX; 
+    float spawnY;
+};
+
+struct Point2D {
+    int x;
+    int y;
+};
+
 class GameMap {
 private:
     int grid[MAP_ROWS][MAP_COLS];
@@ -42,6 +61,7 @@ private:
     Texture2D chestClosedSprite; 
     Texture2D chestOpenSprite;
     Texture2D signSprite;
+    Texture2D enemySprite;
     
     Portal portals[MAX_PORTALS]; 
     int portalCount;      
@@ -53,6 +73,12 @@ private:
 
     Signpost signposts[MAX_SIGNPOSTS];
     int signpostCount;
+
+    Enemy enemies[MAX_ENEMIES];
+    int enemyCount;
+    int defeatedHistory[MAX_ENEMY_HISTORY];
+    int defeatedCount;
+    bool isAggro;
 
 public:
     GameMap();
@@ -73,6 +99,11 @@ public:
     void MarkChestOpened(Chest* chest);
 
     Signpost* CheckSignpostInteraction(Rectangle playerBounds);
+
+    void UpdateEnemies(Rectangle playerBounds);
+    Enemy* CheckEnemyCollision(Rectangle playerBounds);
+    void MarkEnemyDefeated(Enemy* enemy);
+    Point2D GetNextPathStep(int startX, int startY, int targetX, int targetY);
 };
 
 #endif

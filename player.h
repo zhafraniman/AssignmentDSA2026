@@ -24,7 +24,7 @@ public:
     Player(float startX, float startY);
     ~Player();        
     
-    void Update(GameMap& map);
+    void Update(GameMap& map, Vector2 inputDirection);
     void Draw();
     Rectangle GetBounds() const;
     // Add this inside the public section of your Player class

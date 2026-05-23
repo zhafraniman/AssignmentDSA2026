@@ -32,4 +32,9 @@ SIGNPOSTS
 12 5 3
 Hello there, traveler!
 Welcome to the custom C++ engine.
-This text was loaded from a file!d
+This text was loaded from a file
+
+ENEMIES
+2
+10 8 301 150 100.0
+15 5 302 200 120.5

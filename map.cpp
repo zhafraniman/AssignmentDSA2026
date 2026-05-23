@@ -1,6 +1,7 @@
 #include "map.h"
 #include <fstream>
 #include <iostream>
+#include <math.h>
 
 GameMap::GameMap() {
     for (int y = 0; y < MAP_ROWS; y++) {
@@ -14,12 +15,15 @@ GameMap::GameMap() {
     chestClosedSprite = LoadTexture("src/sprite/chest_closed.png");
     chestOpenSprite = LoadTexture("src/sprite/chest_open.png");
     signSprite = LoadTexture("src/sprite/sign.png");
-
+    enemySprite = LoadTexture("src/sprite/enemy.png");
+    
     //Initialize our manual counter to 0
     portalCount = 0; 
     chestCount = 0; 
     historyCount = 0;
     signpostCount = 0;
+    enemyCount = 0;
+    defeatedCount = 0;
 }
 
 GameMap::~GameMap() {
@@ -28,6 +32,7 @@ GameMap::~GameMap() {
     UnloadTexture(chestClosedSprite);
     UnloadTexture(chestOpenSprite);
     UnloadTexture(signSprite);
+    UnloadTexture(enemySprite);
 }
 
 bool GameMap::LoadMap(const std::string& filename) {
@@ -38,9 +43,11 @@ bool GameMap::LoadMap(const std::string& filename) {
         return false;
     }
 
-    // 1. CLEAR OLD DATA! 
+    // CLEAR OLD DATA, avoids dupes
     portalCount = 0; 
-    chestCount = 0; // NEW: Wipe out the old chests so they don't duplicate
+    chestCount = 0;
+    signpostCount = 0;
+    enemyCount = 0;
 
     // 2. Read the Map Grid
     for (int y = 0; y < MAP_ROWS; y++) {
@@ -149,8 +156,59 @@ bool GameMap::LoadMap(const std::string& filename) {
                     signpostCount++;
                 }
             }
+        } else if (marker == "ENEMIES") {
+            int numEnemies;
+            file >> numEnemies;
+    
+            for (int i = 0; i < numEnemies; i++) {
+            int gridX, gridY, enemyID, aggroRange;
+            float speed;
+        
+            // Read the blueprint data from the text file
+            file >> gridX >> gridY >> enemyID >> aggroRange >> speed;
+
+            float px = (float)(gridX * TILE_SIZE);
+            float py = (float)(gridY * TILE_SIZE);
+
+            // We are making the hitbox 20 pixels wide and 20 pixels tall.
+            float hitboxWidth = 20.0f;
+            float hitboxHeight = 20.0f;
+
+            // Calculate how far to push the box so it sits in the middle-bottom of the 32x32 tile
+            float offsetX = (TILE_SIZE - hitboxWidth) / 2.0f; 
+            float offsetY = TILE_SIZE - hitboxHeight; 
+
+            
+            // Build the enemy
+            Enemy newEnemy;
+            // Apply the offsets to the starting position!
+            newEnemy.bounds = {px + offsetX, py + offsetY, hitboxWidth, hitboxHeight};
+            newEnemy.uniqueID = enemyID;
+            newEnemy.aggroRange = aggroRange;
+            newEnemy.speed = speed;
+            // IMPORTANT: Keep spawnX and spawnY as the original tile coordinates 
+            // so they walk back to the exact right spot if you flee!
+            newEnemy.spawnX = px + offsetX; 
+            newEnemy.spawnY = py + offsetY;
+            newEnemy.isDefeated = false;
+
+            // --- THE MEMORY CHECK ---
+            for (int j = 0; j < defeatedCount; j++) {
+                if (defeatedHistory[j] == enemyID) {
+                    newEnemy.isDefeated = true; 
+                    std::cout << "[LOADER] Enemy ID " << enemyID << " is already dead." << std::endl;
+                    break; 
+                }
+            }
+
+            // Save the enemy into the map's array
+            if (enemyCount < MAX_ENEMIES) {
+                enemies[enemyCount] = newEnemy;
+                enemyCount++;
+            }
         }
     }
+}
 
     file.close();
     return true;
@@ -218,7 +276,6 @@ void GameMap::Draw() {
 
     // Draw the signpost
     for (int i = 0; i < signpostCount; i++) {
-        
         // Grab the exact X and Y pixel coordinates, casting them to integers for the screen
         int drawX = (int)signposts[i].bounds.x;
         int drawY = (int)signposts[i].bounds.y;
@@ -226,6 +283,24 @@ void GameMap::Draw() {
         // Stamp the signpost onto the map
         DrawTexture(signSprite, drawX, drawY, WHITE);
     }
+
+    // Draw the enemy
+    for (int i = 0; i < enemyCount; i++) {
+    // Only draw the enemy if they haven't been killed yet!
+    if (!enemies[i].isDefeated) {
+        int drawX = (int)(enemies[i].bounds.x - 6.0f); // 6 is the offsetX we calculated above
+        int drawY = (int)(enemies[i].bounds.y - 12.0f); // 12 is the offsetY we calculated above
+        
+        // Stamp the custom enemy sprite onto the screen
+        DrawTexture(enemySprite, drawX, drawY, WHITE);
+        if (isAggro) {
+            DrawTexture(enemySprite, drawX, drawY, RED);
+        }
+
+        // Debugging
+        DrawRectangleLinesEx(enemies[i].bounds, 1, RED);
+    }
+}
 }
 
 bool GameMap::IsSolid(int targetX, int targetY) {
@@ -320,4 +395,170 @@ Signpost* GameMap::CheckSignpostInteraction(Rectangle playerBounds) {
         }
     }
     return nullptr;
+}
+
+void GameMap::UpdateEnemies(Rectangle playerBounds) {
+    float deltaTime = GetFrameTime();
+    
+    // THE SEARCHING ALGO: Linear Search through all enemies
+    for (int i = 0; i < enemyCount; i++) {
+        if (enemies[i].isDefeated) continue; // Skip dead enemies
+        
+        // Find the center of the player and the enemy
+        float playerCenterX = playerBounds.x + (playerBounds.width / 2);
+        float playerCenterY = playerBounds.y + (playerBounds.height / 2);
+        float enemyCenterX = enemies[i].bounds.x + (enemies[i].bounds.width / 2);
+        float enemyCenterY = enemies[i].bounds.y + (enemies[i].bounds.height / 2);
+        
+        // 1. Calculate the distance using the Pythagorean theorem
+        float distanceX = playerCenterX - enemyCenterX;
+        float distanceY = playerCenterY - enemyCenterY;
+        float totalDistance = sqrt((distanceX * distanceX) + (distanceY * distanceY));
+        
+        // 2. Are they inside the aggro range? CHASE!
+        if (totalDistance < enemies[i].aggroRange) {
+            isAggro = true;
+            
+            int enemyGridX = (int)(enemyCenterX / TILE_SIZE);
+            int enemyGridY = (int)(enemyCenterY / TILE_SIZE);
+            int playerGridX = (int)(playerCenterX / TILE_SIZE);
+            int playerGridY = (int)(playerCenterY / TILE_SIZE);
+
+            // Ask the Pathfinder where to go next!
+            Point2D nextStep = GetNextPathStep(enemyGridX, enemyGridY, playerGridX, playerGridY);
+
+            // Convert the target Grid Tile back into exactly the center pixels
+            float targetPixelX = (nextStep.x * TILE_SIZE) + (TILE_SIZE / 2.0f);
+            float targetPixelY = (nextStep.y * TILE_SIZE) + (TILE_SIZE / 2.0f);
+
+            // Now do standard vector math aiming at the target tile instead of the player!
+            float stepDistX = targetPixelX - enemyCenterX;
+            float stepDistY = targetPixelY - enemyCenterY;
+            float stepTotalDist = sqrt((stepDistX * stepDistX) + (stepDistY * stepDistY));
+
+            if (stepTotalDist > 2.0f) { // Prevent jittering when reaching the exact center
+                float dirX = stepDistX / stepTotalDist;
+                float dirY = stepDistY / stepTotalDist;
+
+                enemies[i].bounds.x += dirX * enemies[i].speed * deltaTime;
+                if (CheckCollision(enemies[i].bounds)) enemies[i].bounds.x -= dirX * enemies[i].speed * deltaTime;
+
+                enemies[i].bounds.y += dirY * enemies[i].speed * deltaTime;
+                if (CheckCollision(enemies[i].bounds)) enemies[i].bounds.y -= dirY * enemies[i].speed * deltaTime;
+            }
+        } else {
+            isAggro = false;
+            // --- THE WALK BACK HOME LOGIC ---
+            
+            // 1. Calculate the distance from the enemy's CURRENT position to its SPAWN position
+            float distToSpawnX = enemies[i].spawnX - enemies[i].bounds.x;
+            float distToSpawnY = enemies[i].spawnY - enemies[i].bounds.y;
+            float totalDistToSpawn = sqrt((distToSpawnX * distToSpawnX) + (distToSpawnY * distToSpawnY));
+            
+            // 2. Only walk if they aren't already standing exactly on their spawn point
+            if (totalDistToSpawn > 1.0f) {
+                
+                // 3. Normalize the vector (just like the chase logic!)
+                float dirX = distToSpawnX / totalDistToSpawn;
+                float dirY = distToSpawnY / totalDistToSpawn;
+                
+                // Let's make them walk back at half speed so it looks like they are giving up
+                float returnSpeed = enemies[i].speed * 0.5f; 
+                
+                // Resolve X Axis Movement
+                enemies[i].bounds.x += dirX * returnSpeed * deltaTime;
+                if (CheckCollision(enemies[i].bounds)) {
+                    enemies[i].bounds.x -= dirX * returnSpeed * deltaTime; 
+                }
+
+                // Resolve Y Axis Movement
+                enemies[i].bounds.y += dirY * returnSpeed * deltaTime;
+                if (CheckCollision(enemies[i].bounds)) {
+                    enemies[i].bounds.y -= dirY * returnSpeed * deltaTime; 
+                }
+            }
+        }
+    }
+}
+
+Enemy* GameMap::CheckEnemyCollision(Rectangle playerBounds) {
+    for (int i = 0; i < enemyCount; i++) {
+        if (!enemies[i].isDefeated && CheckCollisionRecs(playerBounds, enemies[i].bounds)) {
+            return &enemies[i]; // Return the specific enemy we touched
+        }
+    }
+    return nullptr;
+}
+
+void GameMap::MarkEnemyDefeated(Enemy* enemy) {
+    enemy->isDefeated = true;
+    if (defeatedCount < MAX_ENEMY_HISTORY) {
+        defeatedHistory[defeatedCount] = enemy->uniqueID;
+        defeatedCount++;
+    }
+}
+
+Point2D GameMap::GetNextPathStep(int startX, int startY, int targetX, int targetY) {
+    // 1. The Custom Queue (Max size is grid width * height)
+    Point2D queue[MAP_ROWS * MAP_COLS];
+    int front = 0;
+    int back = 0;
+
+    // 2. Memory Arrays (To remember where we walked)
+    bool visited[MAP_ROWS][MAP_COLS] = {false};
+    Point2D parent[MAP_ROWS][MAP_COLS]; // Remembers "who" walked onto this tile
+
+    // Setup the starting point
+    queue[back] = {startX, startY};
+    back++;
+    visited[startY][startX] = true;
+    parent[startY][startX] = {-1, -1}; // The start has no parent
+
+    // Directions: Up, Down, Left, Right
+    int dx[] = {0, 0, -1, 1};
+    int dy[] = {-1, 1, 0, 0};
+
+    bool found = false;
+
+    // 3. The Search Loop
+    while (front < back) {
+        Point2D current = queue[front];
+        front++; // Dequeue the first item
+
+        // Did we find the player's tile?
+        if (current.x == targetX && current.y == targetY) {
+            found = true;
+            break;
+        }
+
+        // Look at all 4 neighbor tiles
+        for (int i = 0; i < 4; i++) {
+            int nx = current.x + dx[i];
+            int ny = current.y + dy[i];
+
+            // Bounds check & wall check
+            if (nx >= 0 && nx < MAP_COLS && ny >= 0 && ny < MAP_ROWS) {
+                if (grid[ny][nx] != 1 && !visited[ny][nx]) {
+                    visited[ny][nx] = true;         // Mark as seen
+                    parent[ny][nx] = current;       // Draw an arrow back to where we came from
+                    
+                    queue[back] = {nx, ny};         // Enqueue this new tile to check later
+                    back++;
+                }
+            }
+        }
+    }
+
+    // If the player is surrounded by walls and unreachable, just stand still
+    if (!found) return {startX, startY}; 
+
+    // 4. Backtracking: Trace the arrows backward from the player to the enemy
+    Point2D step = {targetX, targetY};
+    
+    // Keep stepping backward until the tile we are standing on is exactly one step away from the enemy's start
+    while (parent[step.y][step.x].x != startX || parent[step.y][step.x].y != startY) {
+        step = parent[step.y][step.x];
+    }
+
+    return step; // This is the immediate next tile the enemy must walk to!
 }
