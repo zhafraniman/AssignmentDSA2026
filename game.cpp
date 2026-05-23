@@ -1,9 +1,14 @@
 #include "game.h"
+#include <fstream>
 
 // --- INITIALIZATION ---
 Game::Game() : myPlayer(388.0f, 256.0f) {
     worldMap.LoadMap("src/levels/level1.txt"); 
     currentState = STATE_OVERWORLD;
+	std::ifstream inputFile("usersfile.txt");
+	inputFile>>fileScore;
+	inputFile.close();
+	std::ofstream outputFile("usersfile.txt", std::ios::out);
 }
 
 // --- CLEANUP ---
@@ -73,7 +78,10 @@ void Game::Update() {
                 myPlayer.Teleport(hitPortal.spawnX, hitPortal.spawnY);
             }
             
-            if (IsKeyPressed(KEY_B)) currentState = STATE_BATTLE;
+		if (IsKeyPressed(KEY_B)) {
+                    battle.StartBattle();
+                    currentState = STATE_BATTLE;
+                }  
             if (IsKeyPressed(KEY_M)) currentState = STATE_MENU; 
             break;
         }
@@ -93,12 +101,29 @@ void Game::Update() {
             if (IsKeyPressed(KEY_M) || IsKeyPressed(KEY_ESCAPE)) currentState = STATE_OVERWORLD;
             break;
             
-        case STATE_BATTLE:
-            if (IsKeyPressed(KEY_K)) {
-                worldMap.MarkEnemyDefeated(currentEnemy);
-                currentEnemy = nullptr; // Clear the memory
-                currentState = STATE_OVERWORLD;
-            }
+    	case STATE_BATTLE:{
+		    if (!battle.IsBattleOver()) {
+			battle.Update(myPlayer);
+		    }
+
+		    if (battle.IsBattleOver()) {
+
+			if (IsKeyPressed(KEY_SPACE) || IsKeyPressed(KEY_ESCAPE)) {
+
+			 if (battle.GetState() == PLAYER_LOSE){
+
+				worldMap.LoadMap("src/levels/level1.txt");
+				myPlayer.Teleport(388.0f, 256.0f);
+				battle.get_healing() = battle.max_HP();
+		    }
+
+		currentState = STATE_OVERWORLD;
+		battle.StartBattle();
+	    }
+	}
+
+	break;
+    }
     
             // If you FLEE from the enemy (Press ESC)
             if (IsKeyPressed(KEY_ESCAPE)) {
@@ -117,8 +142,30 @@ void Game::Update() {
 void Game::Draw() {
     BeginDrawing();
     
-    gameRenderer.DrawFrame(currentState, myPlayer, worldMap);
-    dialogueBox.Draw(); 
+    if (currentState == STATE_BATTLE) {
+            battle.Draw(myPlayer);
+     }
+    else {
+         gameRenderer.DrawFrame(currentState, myPlayer, worldMap);
+     }
+
+	if (currentState != STATE_BATTLE){
+
+    DrawRectangle(50, 50, 50, 50, YELLOW);
+    DrawRectangle(100, 50, 50, 50, YELLOW);
+    DrawRectangle(50, 100, 50, 50, YELLOW);
+    DrawRectangle(100, 100, 50, 50, YELLOW);
+
+    DrawRectangleLines(50, 50, 100, 100, BLACK);
+
+    DrawText(
+        std::to_string(fileScore).c_str(),
+        55,
+        60,
+        50,
+        BLACK
+    );
+} 
 
     EndDrawing();
 }

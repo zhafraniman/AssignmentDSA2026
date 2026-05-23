@@ -5,6 +5,8 @@
 #include "renderer.h"
 #include "map.h"
 #include "dialogue.h"
+#include "Battle.h"
+#include "Items.h"
 
 class Game {
 public:
@@ -23,8 +25,12 @@ private:
     GameMap worldMap;
     Player myPlayer;
     DialogueBox dialogueBox;
+    BattleSystem battle;
     GameState currentState;
     Vector2 playerInput;
+
+    //values
+    int fileScore;
 
     Enemy* currentEnemy;
 };
