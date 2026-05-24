@@ -104,6 +104,7 @@ public:
     Enemy* CheckEnemyCollision(Rectangle playerBounds);
     void MarkEnemyDefeated(Enemy* enemy);
     Point2D GetNextPathStep(int startX, int startY, int targetX, int targetY);
+    void ResetDefeatedEnemies();
 };
 
 #endif
