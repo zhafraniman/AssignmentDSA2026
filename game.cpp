@@ -5,6 +5,7 @@
 Game::Game() : myPlayer(388.0f, 256.0f) {
     worldMap.LoadMap("src/levels/level1.txt"); 
     currentState = STATE_OVERWORLD;
+    currentEnemy = nullptr;
 	std::ifstream inputFile("usersfile.txt");
 	inputFile>>fileScore;
 	inputFile.close();
@@ -85,6 +86,7 @@ void Game::Update() {
             }
             
 		if (IsKeyPressed(KEY_B)) {
+                    currentEnemy = nullptr;
                     battle.StartBattle();
                     currentState = STATE_BATTLE;
                 }  
@@ -115,9 +117,11 @@ case STATE_BATTLE: {
     if (battle.IsBattleOver()) {
         if (IsKeyPressed(KEY_SPACE) || IsKeyPressed(KEY_ESCAPE)) {
             if (battle.GetState() == PLAYER_LOSE) {
+                worldMap.ResetDefeatedEnemies();
                 worldMap.LoadMap("src/levels/level1.txt");
                 myPlayer.Teleport(388.0f, 256.0f);
                 battle.get_healing() = battle.max_HP();
+                currentEnemy = nullptr;
             } else {
                 // Player won — mark enemy defeated so it doesn't respawn
                 if (currentEnemy != nullptr) {
