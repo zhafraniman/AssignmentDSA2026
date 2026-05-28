@@ -28,7 +28,7 @@ private:
     BattleSystem battle;
     GameState currentState;
     Vector2 playerInput;
-
+    bool wasTouchingPortal;
     //values
     int fileScore;
 
