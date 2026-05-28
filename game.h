@@ -34,4 +34,3 @@ private:
 
     Enemy* currentEnemy;
 };
-

@@ -11,24 +11,15 @@ Player::Player(float startX, float startY) {
     level = 1;
     maxHp = 25;
     hp = 25;
-    for (int i = 0; i < INVENTORY_SIZE; i++) {
-        inventory[i].id = 0;
-        inventory[i].name = "Empty";
-    }
 }
 
 Player::~Player() {
     UnloadTexture(sprite); 
 }
 
-// Change the function signature in player.h to accept the input direction:
-// void Update(GameMap& map, Vector2 inputDirection);
-
 void Player::Update(GameMap& map, Vector2 inputDirection) {
     float deltaTime = GetFrameTime();
     
-    // We no longer ask Raylib for keyboard input here! 
-    // We trust whatever the engine tells us the player wants to do.
     Vector2 moveAmount = inputDirection;
 
     // Continuous Diagonal Normalization
@@ -71,7 +62,7 @@ void Player::Draw() {
     DrawTextureV(sprite, position, WHITE);
     
     // DEBUGGING: PLAYER HITBOX
-     DrawRectangleLinesEx(GetBounds(), 1, RED);
+    DrawRectangleLinesEx(GetBounds(), 1, RED);
 }
 
 void Player::Teleport(float newX, float newY) {
@@ -80,18 +71,21 @@ void Player::Teleport(float newX, float newY) {
 }
 
 bool Player::AddItem(Item newItem) {
-    // Step 1: Loop through the array from slot 0 to 19
-    for (int i = 0; i < INVENTORY_SIZE; i++) {
-        
-        // Step 2: Is this slot completely empty?
-        if (inventory[i].id == 0) { 
-            
-            // Step 3: Put the item here!
-            inventory[i] = newItem; 
-            return true; // Success! We tell the engine the item was picked up.
-        }
-    }
-    
-    // If the loop finishes and we never returned true, the bag is totally full.
-    return false; 
+    return inventory.AddItem(newItem);
+}
+
+Item Player::GetInventoryItem(int index) const {
+    return inventory.GetItemByIndex(index);
+}
+
+int Player::GetInventoryCount() const {
+    return inventory.GetItemCount();
+}
+
+bool Player::RemoveItem(int itemID) {
+    return inventory.RemoveItem(itemID);
+}
+
+bool Player::UseItem(int itemID) {
+    return inventory.UseItem(itemID);
 }

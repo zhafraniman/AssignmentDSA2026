@@ -2,9 +2,8 @@
 #define PLAYER_H
 #include "raylib.h"
 #include "map.h"
+#include "Inventory.h"
 #include <string>
-
-#define INVENTORY_SIZE 20
 
 class Player {
 private:
@@ -18,7 +17,7 @@ private:
     int level;
     int hp;
     int maxHp;
-    Item inventory[INVENTORY_SIZE];
+    Inventory inventory;
 
 public:
     Player(float startX, float startY);
@@ -27,7 +26,6 @@ public:
     void Update(GameMap& map, Vector2 inputDirection);
     void Draw();
     Rectangle GetBounds() const;
-    // Add this inside the public section of your Player class
     void Teleport(float newX, float newY);
 
     // Getters - Read-only access to private variables
@@ -36,8 +34,12 @@ public:
     int GetHP() const { return hp; }
     int GetMaxHP() const { return maxHp; }
 
+    // Inventory methods
     bool AddItem(Item newItem);
-    Item GetInventoryItem(int index) const { return inventory[index]; }
+    Item GetInventoryItem(int index) const;
+    int GetInventoryCount() const;
+    bool RemoveItem(int itemID);
+    bool UseItem(int itemID);
 };
 
 #endif

@@ -1,3 +1,4 @@
+// renderer.cpp
 #include "renderer.h"
 
 Renderer::Renderer() {
@@ -15,15 +16,16 @@ Renderer::~Renderer() {
     CloseWindow();
 }
 
-void Renderer::DrawFrame(GameState state, Player& player, GameMap& map) {
+void Renderer::DrawFrame(GameState state, Player& player, GameMap& map, DialogueBox& dialogueBox) {
 
     switch (state) {
         case STATE_OVERWORLD:
             DrawOverworld(player, map);
             break;
-        case STATE_DIALOGUE: // <--- ADD THIS RIGHT BELOW OVERWORLD!
+        case STATE_DIALOGUE:
             map.Draw();
             player.Draw();
+            dialogueBox.Draw();
             break;
         case STATE_MENU:
             DrawOverworld(player, map);
@@ -92,13 +94,13 @@ void Renderer::DrawMenu(const Player& player) {
 
     DrawText("INVENTORY:", panelX + 20, panelY + 160, 20, GOLD);
 
-    // Loop through the fixed array to display items
+    // Loop through inventory items and display them
     int drawY = panelY + 190;
-    for (int i = 0; i < INVENTORY_SIZE; i++) {
+    for (int i = 0; i < player.GetInventoryCount(); i++) {
         Item currentItem = player.GetInventoryItem(i);
         
         if (currentItem.id != 0) { // Only draw slots that are NOT empty
-            // .c_str() converts the string for Raylib
+            // Draw item name (quantity is stored in the linked list, just show the name)
             DrawText(currentItem.name.c_str(), panelX + 20, drawY, 15, RAYWHITE);
             drawY += 25; // Move the text cursor down for the next item
         }

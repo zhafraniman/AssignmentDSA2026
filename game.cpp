@@ -50,7 +50,7 @@ void Game::Update() {
             Enemy* touchedEnemy = worldMap.CheckEnemyCollision(myPlayer.GetBounds());
             if (touchedEnemy != nullptr) {
                 currentEnemy = touchedEnemy; // Remember who we are fighting
-		battle.StartBattle();
+			battle.StartBattle();
                 currentState = STATE_BATTLE;
             }
 
@@ -61,7 +61,7 @@ void Game::Update() {
                     if (myPlayer.AddItem(nearbyChest->content)) {
                         worldMap.MarkChestOpened(nearbyChest); 
                         nearbyChest->isOpen = true; 
-			fileScore=fileScore+10;
+						fileScore=fileScore+10;
                     }
                 }
             }
@@ -79,33 +79,33 @@ void Game::Update() {
             }
 
             // PORTAL LOGIC
-	Portal hitPortal;
-	if (worldMap.CheckPortals(myPlayer.GetBounds(), hitPortal)) {
-	    worldMap.LoadMap(hitPortal.targetMap);
-	    myPlayer.Teleport(hitPortal.spawnX, hitPortal.spawnY);
-    
-	    // Check if we spawned on an enemy and move away
-	    Enemy* collidingEnemy = worldMap.CheckEnemyCollision(myPlayer.GetBounds());
-	    if (collidingEnemy != nullptr) {
-	        // Try alternate positions: right, up, down, left
-	        float offsetX[] = {50.0f, -50.0f, 0.0f, 0.0f};
-	        float offsetY[] = {0.0f, 0.0f, -50.0f, 50.0f};
+			Portal hitPortal;
+			if (worldMap.CheckPortals(myPlayer.GetBounds(), hitPortal)) {
+			    worldMap.LoadMap(hitPortal.targetMap);
+			    myPlayer.Teleport(hitPortal.spawnX, hitPortal.spawnY);
         
-	        for (int i = 0; i < 4; i++) {
-	            myPlayer.Teleport(hitPortal.spawnX + offsetX[i], hitPortal.spawnY + offsetY[i]);
-	            if (worldMap.CheckEnemyCollision(myPlayer.GetBounds()) == nullptr) {
-	                break; // Found safe spot
+			    // Check if we spawned on an enemy and move away
+			    Enemy* collidingEnemy = worldMap.CheckEnemyCollision(myPlayer.GetBounds());
+			    if (collidingEnemy != nullptr) {
+			        // Try alternate positions: right, up, down, left
+			        float offsetX[] = {50.0f, -50.0f, 0.0f, 0.0f};
+			        float offsetY[] = {0.0f, 0.0f, -50.0f, 50.0f};
+            
+			        for (int i = 0; i < 4; i++) {
+			            myPlayer.Teleport(hitPortal.spawnX + offsetX[i], hitPortal.spawnY + offsetY[i]);
+			            if (worldMap.CheckEnemyCollision(myPlayer.GetBounds()) == nullptr) {
+			                break; // Found safe spot
+                }
             }
         }
-    }
-}            
+    }            
             
-		if (IsKeyPressed(KEY_B)) {
-			if(currentState==STATE_OVERWORLD){
+				if (IsKeyPressed(KEY_B)) {
+					if(currentState==STATE_OVERWORLD){
                     battle.StartBattle();
                     currentState = STATE_BATTLE;
                 }
-	}
+			}
             if (IsKeyPressed(KEY_M)) currentState = STATE_MENU; 
             break;
         }
@@ -162,7 +162,7 @@ void Game::Draw() {
             battle.Draw(myPlayer);
      }
     else {
-         gameRenderer.DrawFrame(currentState, myPlayer, worldMap);
+         gameRenderer.DrawFrame(currentState, myPlayer, worldMap, dialogueBox);
      }
 
 	if (currentState != STATE_BATTLE){

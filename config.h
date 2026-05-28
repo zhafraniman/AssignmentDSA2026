@@ -1,3 +1,4 @@
+// config.h
 #ifndef CONFIG_H
 #define CONFIG_H
 #include "raylib.h"
@@ -10,6 +11,8 @@
 struct Item {
     int id;           // 0 = Empty Slot. Anything else is a real item.
     std::string name; // e.g., "Health Potion", "Iron Key"
+    std::string description;  // Item description
+    int quantity;     // How many of this item
 };
 
 enum GameState {

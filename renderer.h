@@ -5,12 +5,13 @@
 #include "config.h"
 #include "player.h"
 #include "map.h"
+#include "dialogue.h"
 
 class Renderer {
 public:
     Renderer();
     ~Renderer();
-    void DrawFrame(GameState state, Player& player, GameMap& map);
+    void DrawFrame(GameState state, Player& player, GameMap& map, DialogueBox& dialogueBox);
 
 private:
     void DrawOverworld(Player& player, GameMap& map);
