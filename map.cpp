@@ -275,11 +275,10 @@ void GameMap::AddPortal(Rectangle bounds, std::string targetMap,
     portals[portalCount++] = p;
 }
  
-bool GameMap::CheckPortals(Rectangle playerBounds, Portal& outPortal) {
+bool GameMap::CheckPortals(Rectangle playerBounds) {
     for (int i = 0; i < portalCount; i++) {
         if (CheckCollisionRecs(playerBounds, portals[i].bounds)) {
-            outPortal = portals[i];
-            return true;
+            return &portals[i];
         }
     }
     return false;
@@ -302,9 +301,9 @@ void GameMap::Draw() {
         // Color tint = portals[i].requiresKey ? RED : WHITE;
         // Change texture depending if the door is locked or not
         if (portals[i].requiresKey) {
-            DrawTexture(portalSprite, drawX, drawY, WHITE);
-        } else {
             DrawTexture(portalLockedSprite, drawX, drawY, WHITE);
+        } else {
+            DrawTexture(portalSprite, drawX, drawY, WHITE);
         }
     }
  
@@ -504,8 +503,13 @@ void GameMap::ResetDefeatedEnemies() {
 // BFS PATHFINDER
 // -------------------------------------------------------------------
 Point2D GameMap::GetNextPathStep(int startX, int startY, int targetX, int targetY) {
+    // GUARD CLAUSE, START AND TARGET WONT BE AT THE SAME LOCATION
+    if (startX == targetX && startY == targetY) {
+        return {startX, startY};
+    }
     Point2D bfsQueue[MAP_ROWS * MAP_COLS];
     int front = 0, back = 0;
+
  
     bool    visited[MAP_ROWS][MAP_COLS] = {};
     Point2D parent [MAP_ROWS][MAP_COLS];

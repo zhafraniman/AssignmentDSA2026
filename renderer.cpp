@@ -18,12 +18,12 @@ void Renderer::DrawFrame(GameState state, Player& player, GameMap& map, Dialogue
             DrawOverworld(player, map);
             break;
         case STATE_DIALOGUE:
-            map.Draw();
-            player.Draw();
+            // map.Draw();
+            // player.Draw();
+            DrawOverworld(player, map);
             dialogueBox.Draw();
             break;
         case STATE_MENU:
-            DrawOverworld(player, map);
             DrawMenu(player);
             break;
         case STATE_BATTLE:

@@ -1,5 +1,6 @@
 #include "game.h"
 #include <fstream>
+#include <raylib.h>
 
 // --- INITIALIZATION ---
 Game::Game() : myPlayer(388.0f, 256.0f) {
@@ -155,8 +156,7 @@ void Game::Update() {
 
                 bool touchingPortal =
                     worldMap.CheckPortals(
-                        myPlayer.GetBounds(),
-                        hitPortal
+                        myPlayer.GetBounds()
                     );
 
                 // Trigger ONLY when entering portal
@@ -164,33 +164,32 @@ void Game::Update() {
                     !wasTouchingPortal) {
 
                     // ---------------- LOCKED PORTAL ----------------
-                    if (hitPortal.requiresKey &&
-                        !myPlayer.HasIronKey()) {
+                    if (hitPortal.requiresKey) {
+                        if (!myPlayer.HasIronKey()) {
+                            dialogueBox.Start();
+    
+                            dialogueBox.Enqueue(
+                                "The door is locked."
+                            );
+    
+                            dialogueBox.Enqueue(
+                                "You need an Iron Key to pass."
+                            );
+    
+                            currentState = STATE_DIALOGUE;
+                        } else {
+                            myPlayer.UseItem(ITEM_IRON_KEY);
+                            hitPortal.requiresKey = false;
 
-                        dialogueBox.Start();
+                            dialogueBox.Start();
+                            dialogueBox.Enqueue("You unlocked the door with the Iron Key!");
+                            currentState = STATE_DIALOGUE;
+                        }
 
-                        dialogueBox.Enqueue(
-                            "The door is locked."
-                        );
-
-                        dialogueBox.Enqueue(
-                            "You need an Iron Key to pass."
-                        );
-
-                        currentState = STATE_DIALOGUE;
                     }
 
                     // ---------------- NORMAL PORTAL ----------------
                     else {
-
-                        // Consume key if needed
-                        if (hitPortal.requiresKey) {
-
-                            myPlayer.UseItem(
-                                ITEM_IRON_KEY
-                            );
-                        }
-
                         // Load next map
                         worldMap.LoadMap(
                             hitPortal.targetMap
@@ -409,6 +408,7 @@ void Game::Update() {
 void Game::Draw() {
 
     BeginDrawing();
+    ClearBackground(BgColor);
 
     if (currentState == STATE_BATTLE) {
 
