@@ -420,38 +420,8 @@ void Game::Draw() {
             currentState,
             myPlayer,
             worldMap,
-            dialogueBox
-        );
-    }
-
-    // ------------------------------------------------------------
-    // SCORE DISPLAY
-    // ------------------------------------------------------------
-    if (currentState != STATE_BATTLE) {
-
-        DrawRectangle(
-            50,
-            50,
-            100,
-            100,
-            YELLOW
-        );
-
-        DrawRectangleLines(
-            50,
-            50,
-            100,
-            100,
-            BLACK
-        );
-
-        DrawText(
-            std::to_string(fileScore).c_str(),
-            55,
-            60,
-            50,
-            BLACK
-        );
+            dialogueBox,
+            fileScore);
     }
 
     EndDrawing();

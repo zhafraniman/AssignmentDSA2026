@@ -93,7 +93,7 @@ public:
     // requiresKey defaults to false for backward compatibility
     void AddPortal(Rectangle bounds, std::string targetMap,
                    float spawnX, float spawnY, bool requiresKey = false);
-    bool CheckPortals(Rectangle playerBounds, Portal& outPortal);
+    bool CheckPortals(Rectangle playerBounds);
 
     void AddChest(Rectangle bounds, Item content);
     Chest*    CheckChestInteraction(Rectangle playerBounds);

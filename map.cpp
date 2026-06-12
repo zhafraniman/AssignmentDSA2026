@@ -56,7 +56,7 @@ static void FillItemData(Item& item) {
             item.description = "Gain +50 max HP";
             break;
         case ITEM_IRON_KEY:
-            item.description = "Opens locked portals and doors";
+            item.description = "Opens locked doors";
             break;
         default:
             item.description = "A mysterious item";
@@ -126,6 +126,13 @@ bool GameMap::LoadMap(const std::string& filename) {
                 int gridX, gridY, chestID, itemID;
                 std::string itemName;
                 file >> gridX >> gridY >> chestID >> itemID >> itemName;
+ 
+                // Manual string parsing to replace underscores
+                for (int j = 0; j < itemName.length(); j++) {
+                    if (itemName[j] == '_') {
+                        itemName[j] = ' ';
+                    }
+                }
  
                 float px = (float)(gridX * TILE_SIZE);
                 float py = (float)(gridY * TILE_SIZE);

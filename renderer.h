@@ -11,13 +11,13 @@ class Renderer {
 public:
     Renderer();
     ~Renderer();
-    void DrawFrame(GameState state, Player& player, GameMap& map, DialogueBox& dialogueBox);
+    void DrawFrame(GameState state, Player& player, GameMap& map, DialogueBox& dialogueBox, int score);
 
 private:
     void DrawOverworld(Player& player, GameMap& map);
     void DrawBattle();
     void DrawGrid();
-    void DrawMenu(const Player& player);
+    void DrawMenu(const Player& player, int score);
 
     Texture2D bgTexture; 
 };

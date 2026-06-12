@@ -12,19 +12,18 @@ Renderer::~Renderer() {
     CloseWindow();
 }
  
-void Renderer::DrawFrame(GameState state, Player& player, GameMap& map, DialogueBox& dialogueBox) {
+void Renderer::DrawFrame(GameState state, Player& player, GameMap& map, DialogueBox& dialogueBox, int score) {
     switch (state) {
         case STATE_OVERWORLD:
             DrawOverworld(player, map);
             break;
         case STATE_DIALOGUE:
-            // map.Draw();
-            // player.Draw();
             DrawOverworld(player, map);
             dialogueBox.Draw();
             break;
         case STATE_MENU:
-            DrawMenu(player);
+            DrawOverworld(player, map);
+            DrawMenu(player, score);
             break;
         case STATE_BATTLE:
             DrawBattle();
@@ -58,7 +57,7 @@ void Renderer::DrawGrid() {
         DrawLine(0, i * TILE_SIZE, SCREEN_WIDTH, i * TILE_SIZE, LIGHTGRAY);
 }
  
-void Renderer::DrawMenu(const Player& player) {
+void Renderer::DrawMenu(const Player& player, int score) {
     const int panelX = SCREEN_WIDTH - 260;
     const int panelY = 50;
     const int panelW = 210;
@@ -72,16 +71,19 @@ void Renderer::DrawMenu(const Player& player) {
     std::string levelText = "LVL:  " + std::to_string(player.GetLevel());
     std::string hpText    = "HP:   " + std::to_string(player.GetHP()) +
                             " / "    + std::to_string(player.GetMaxHP());
+
+    std::string scoreText = "SCORE: " + std::to_string(score);
  
     DrawText(nameText.c_str(),  panelX + 15, panelY + 20,  18, RAYWHITE);
     DrawText(levelText.c_str(), panelX + 15, panelY + 50,  18, RAYWHITE);
     DrawText(hpText.c_str(),    panelX + 15, panelY + 80,  18, GREEN);
- 
+    DrawText(scoreText.c_str(), panelX + 15, panelY + 110, 18, GOLD);
+
     // Inventory section
-    DrawText("INVENTORY:", panelX + 15, panelY + 120, 18, GOLD);
-    DrawLine(panelX + 15, panelY + 142, panelX + panelW - 15, panelY + 142, GOLD);
+    DrawText("INVENTORY:", panelX + 15, panelY + 145, 18, GOLD);
+    DrawLine(panelX + 15, panelY + 167, panelX + panelW - 15, panelY + 167, GOLD);
  
-    int drawY = panelY + 152;
+    int drawY = panelY + 177;
     int count = player.GetInventoryCount();
  
     if (count == 0) {
