@@ -1,9 +1,11 @@
 #include "map.h"
+#include <cstddef>
 #include <fstream>
 #include <iostream>
 #include <math.h>
 #include <cstdlib>
 #include <ctime>
+#include <raylib.h>
  
 GameMap::GameMap() {
     for (int y = 0; y < MAP_ROWS; y++)
@@ -12,10 +14,16 @@ GameMap::GameMap() {
  
     wallSprite        = LoadTexture("src/sprite/wall.png");
     portalSprite      = LoadTexture("src/sprite/door.png");
+    portalLockedSprite= LoadTexture("src/sprite/door_locked.png");
+    gateSprite   = LoadTexture("src/sprite/gate.png");
+    gateLockedSprite = LoadTexture("src/sprite/gate_locked.png");
     chestClosedSprite = LoadTexture("src/sprite/chest_closed.png");
     chestOpenSprite   = LoadTexture("src/sprite/chest_open.png");
     signSprite        = LoadTexture("src/sprite/sign.png");
-    enemySprite       = LoadTexture("src/sprite/enemy.png");
+
+    NULLByteSprite = LoadTexture("src/sprite/nullbyte.png");
+    LostArraySprite = LoadTexture("src/sprite/lostarray.png");
+    PointerGlitchSprite = LoadTexture("src/sprite/pointerglitch.png");
  
     portalCount   = 0;
     chestCount    = 0;
@@ -23,6 +31,10 @@ GameMap::GameMap() {
     signpostCount = 0;
     enemyCount    = 0;
     defeatedCount = 0;
+
+    gateCount     = 0;
+    unlockedGateCount = 0;
+
     isAggro       = false;
  
     std::srand(std::time(nullptr));
@@ -34,7 +46,11 @@ GameMap::~GameMap() {
     UnloadTexture(chestClosedSprite);
     UnloadTexture(chestOpenSprite);
     UnloadTexture(signSprite);
-    UnloadTexture(enemySprite);
+    UnloadTexture(gateSprite);
+    UnloadTexture(gateLockedSprite);
+    UnloadTexture(NULLByteSprite);
+    UnloadTexture(LostArraySprite);
+    UnloadTexture(PointerGlitchSprite);
 }
  
 // Helper: fill in description and ensure quantity=1 for a given item ID.
@@ -55,10 +71,55 @@ static void FillItemData(Item& item) {
             item.description = "Gain +50 max HP";
             break;
         case ITEM_IRON_KEY:
-            item.description = "Opens locked portals and doors";
+            item.description = "Opens locked doors";
             break;
         default:
             item.description = "A mysterious item";
+            break;
+    }
+}
+
+static void FillEnemyData(Enemy& enemy) {
+    switch (enemy.typeID) {
+        case 1:
+            enemy.name = "Green Slime";
+            enemy.maxHp = 20;
+            enemy.hp = 20;
+            enemy.attack = 5;
+            enemy.speed = 50.0f;
+            enemy.aggroRange = 100;
+            enemy.hasLoot = true;
+            enemy.lootDrop = {ITEM_HEALTH_POTION, "Health Potion", "Restores 20 HP", 1};
+            break;
+            
+        case 2:
+            enemy.name = "Skeleton Guard";
+            enemy.maxHp = 45;
+            enemy.hp = 45;
+            enemy.attack = 12;
+            enemy.speed = 80.0f;
+            enemy.aggroRange = 150;
+            enemy.hasLoot = true;
+            enemy.lootDrop = {ITEM_STRENGTH_POTION, "Strength Potion", "Deal +10 damage", 1};
+            break;
+
+        case 999: // Final Boss
+            enemy.name = "Orc Warlord";
+            enemy.maxHp = 150;
+            enemy.hp = 150;
+            enemy.attack = 25;
+            enemy.speed = 110.0f;
+            enemy.aggroRange = 250;
+            enemy.hasLoot = false;
+            break;
+
+        default: // Fallback if you type a wrong ID in the text file
+            enemy.name = "Unknown Glitch";
+            enemy.maxHp = 1;
+            enemy.hp = 1;
+            enemy.attack = 1;
+            enemy.speed = 0.0f;
+            enemy.aggroRange = 0;
             break;
     }
 }
@@ -75,180 +136,170 @@ bool GameMap::LoadMap(const std::string& filename) {
     chestCount    = 0;
     signpostCount = 0;
     enemyCount    = 0;
+    gateCount     = 0;
  
-    // Read grid
-    for (int y = 0; y < MAP_ROWS; y++)
-        for (int x = 0; x < MAP_COLS; x++)
-            file >> grid[y][x];
- 
-    std::string marker;
-    while (file >> marker) {
- 
-        // ---- PORTALS ----
-        if (marker == "PORTALS") {
-            int numPortals;
-            file >> numPortals;
-            for (int i = 0; i < numPortals; i++) {
-                int gridX, gridY, spawnGridX, spawnGridY;
-                std::string target;
-                file >> gridX >> gridY >> target >> spawnGridX >> spawnGridY;
- 
-                // Optional requiresKey field (0 or 1).
-                // Backward-compatible: if the next token is not "0"/"1"
-                // (e.g. another section marker), seek back and default to false.
-                bool requiresKey = false;
-                std::streampos savedPos = file.tellg();
-                std::string peekTok;
-                if (file >> peekTok) {
-                    if (peekTok == "0" || peekTok == "1") {
-                        requiresKey = (peekTok == "1");
-                    } else {
-                        file.seekg(savedPos); // Put the token back
-                    }
-                }
- 
-                float px = (float)(gridX      * TILE_SIZE);
-                float py = (float)(gridY      * TILE_SIZE);
-                float sx = (float)(spawnGridX * TILE_SIZE);
-                float sy = (float)(spawnGridY * TILE_SIZE);
- 
-                AddPortal({px, py, (float)TILE_SIZE, (float)TILE_SIZE},
-                          target, sx, sy, requiresKey);
-            }
-        }
- 
-        // ---- CHESTS ----
-        else if (marker == "CHESTS") {
-            int numChests;
-            file >> numChests;
-            for (int i = 0; i < numChests; i++) {
-                int gridX, gridY, chestID, itemID;
-                std::string itemName;
-                file >> gridX >> gridY >> chestID >> itemID >> itemName;
- 
-                float px = (float)(gridX * TILE_SIZE);
-                float py = (float)(gridY * TILE_SIZE);
- 
-                Chest newChest;
-                newChest.bounds   = {px, py, (float)TILE_SIZE, (float)TILE_SIZE};
-                newChest.uniqueID = chestID;
-                newChest.isOpen   = false;
- 
-                // BUG FIX: Set quantity=1 and fill description.
-                // The old code did {itemID, itemName} leaving quantity=0,
-                // which made UseItem return false (0 >= 1 is false).
-                newChest.content = {itemID, itemName, "", 1};
-                FillItemData(newChest.content);
- 
-                std::cout << "[LOADER] Chest ID " << chestID
-                          << " | item: " << itemName
-                          << " | qty: " << newChest.content.quantity << std::endl;
- 
-                // Restore open state from history
-                for (int j = 0; j < historyCount; j++) {
-                    if (openedHistory[j] == chestID) {
-                        newChest.isOpen       = true;
-                        newChest.content.id   = 0;
-                        std::cout << "[LOADER] Chest " << chestID << " already opened." << std::endl;
-                        break;
-                    }
-                }
- 
-                if (chestCount < MAX_CHESTS) {
-                    chests[chestCount] = newChest;
-                    chestCount++;
+    std::string token;
+    
+    
+    while (file >> token) {
+        
+        // MAP
+        if (token == "GRID") {
+            for (int y = 0; y < MAP_ROWS; y++) {
+                for (int x = 0; x < MAP_COLS; x++) {
+                    file >> grid[y][x];
                 }
             }
         }
- 
-        // ---- SIGNPOSTS ----
-        else if (marker == "SIGNPOSTS") {
-            int numSigns;
-            file >> numSigns;
-            for (int i = 0; i < numSigns; i++) {
-                int gridX, gridY, numLines;
-                file >> gridX >> gridY >> numLines;
- 
-                Signpost newSign;
-                newSign.bounds    = {(float)(gridX * TILE_SIZE),
-                                     (float)(gridY * TILE_SIZE),
-                                     (float)TILE_SIZE, (float)TILE_SIZE};
-                newSign.lineCount = 0;
- 
-                std::string dummy;
-                std::getline(file, dummy); // Eat trailing newline after numLines
- 
-                for (int j = 0; j < numLines; j++) {
-                    std::string line;
-                    std::getline(file, line);
-                    if (newSign.lineCount < MAX_LINES_PER_SIGNPOST) {
-                        newSign.dialogue[newSign.lineCount] = line;
-                        newSign.lineCount++;
-                    }
-                }
- 
-                if (signpostCount < MAX_SIGNPOSTS) {
-                    signposts[signpostCount] = newSign;
-                    signpostCount++;
+
+        // PORTALS
+        else if (token == "PORTAL") {
+            int gridX, gridY, spawnGridX, spawnGridY, reqKeyID;
+            std::string target;
+            std::string lockStatus; // Used to get portal status (Locked or Unlocked)
+            
+            file >> gridX >> gridY >> target >> spawnGridX >> spawnGridY >> lockStatus >> reqKeyID;
+            
+            bool requiresKey = (lockStatus == "LOCKED");
+
+            // Unlock logic override (If player already unlocked it before)
+            for (int j = 0; j < unlockedPortalCount; j++) {
+                if (unlockedPortals[j] == target) {
+                    requiresKey = false; 
+                    break;
                 }
             }
+ 
+            float px = (float)(gridX * TILE_SIZE);
+            float py = (float)(gridY * TILE_SIZE);
+            float sx = (float)(spawnGridX * TILE_SIZE);
+            float sy = (float)(spawnGridY * TILE_SIZE);
+ 
+            AddPortal({px, py, (float)TILE_SIZE, (float)TILE_SIZE}, target, sx, sy, requiresKey, reqKeyID);
         }
- 
-        // ---- ENEMIES ----
-        else if (marker == "ENEMIES") {
-            int numEnemies;
-            file >> numEnemies;
-            for (int i = 0; i < numEnemies; i++) {
-                int   gridX, gridY, enemyID, aggroRange;
-                float speed;
-                file >> gridX >> gridY >> enemyID >> aggroRange >> speed;
- 
-                float px = (float)(gridX * TILE_SIZE);
-                float py = (float)(gridY * TILE_SIZE);
- 
-                const float hitW = 20.0f;
-                const float hitH = 20.0f;
-                float offsetX = (TILE_SIZE - hitW) / 2.0f;
-                float offsetY =  TILE_SIZE - hitH;
- 
-                Enemy newEnemy;
-                newEnemy.bounds   = {px + offsetX, py + offsetY, hitW, hitH};
-                newEnemy.uniqueID = enemyID;
-                newEnemy.aggroRange = aggroRange;
-                newEnemy.speed    = speed;
-                newEnemy.spawnX   = px + offsetX;
-                newEnemy.spawnY   = py + offsetY;
-                newEnemy.isDefeated = false;
-                newEnemy.hasLoot  = true;
- 
-                // Random loot table: 50% str potion, 30% def potion, 20% iron key
-                int roll = rand() % 100;
-                if (roll < 50) {
-                    newEnemy.lootDrop = {ITEM_STRENGTH_POTION, "Strength Potion",
-                                         "Deal +10 damage for 2 turns", 1};
-                } else if (roll < 80) {
-                    newEnemy.lootDrop = {ITEM_DEFENSE_POTION, "Defense Potion",
-                                         "Gain +50 max HP", 1};
-                } else {
-                    newEnemy.lootDrop = {ITEM_IRON_KEY, "Iron Key",
-                                         "Opens locked portals and doors", 1};
-                }
- 
-                // Restore defeated state from history
-                for (int j = 0; j < defeatedCount; j++) {
-                    if (defeatedHistory[j] == enemyID) {
-                        newEnemy.isDefeated = true;
-                        newEnemy.hasLoot    = false;
-                        std::cout << "[LOADER] Enemy " << enemyID << " already defeated." << std::endl;
-                        break;
-                    }
-                }
- 
-                if (enemyCount < MAX_ENEMIES) {
-                    enemies[enemyCount] = newEnemy;
-                    enemyCount++;
+
+        // ---- GATES ----
+        else if (token == "GATE") {
+            int gridX, gridY, gateID, reqKeyID;
+            file >> gridX >> gridY >> gateID >> reqKeyID;
+
+            Gate newGate;
+            newGate.bounds = {
+                (float)(gridX * TILE_SIZE), 
+                (float)(gridY * TILE_SIZE), 
+                (float)TILE_SIZE, 
+                (float)TILE_SIZE
+            };
+            newGate.uniqueID = gateID;
+            newGate.isLocked = true; // Assume locked by default
+            newGate.requiredItemID = reqKeyID;
+
+            // Check memory to see if we already unlocked it
+            for (int j = 0; j < unlockedGateCount; j++) {
+                if (unlockedGates[j] == gateID) {
+                    newGate.isLocked = false;
+                    break;
                 }
             }
+
+            if (gateCount < MAX_GATES) gates[gateCount++] = newGate;
+        }
+        
+        // CHESTS
+        else if (token == "CHEST") {
+            int gridX, gridY, chestID, itemID;
+            std::string itemName;
+            file >> gridX >> gridY >> chestID >> itemID >> itemName;
+ 
+            for (int j = 0; j < itemName.length(); j++) {
+                if (itemName[j] == '_') itemName[j] = ' ';
+            }
+ 
+            Chest newChest;
+            newChest.bounds   = {(float)(gridX * TILE_SIZE), (float)(gridY * TILE_SIZE), (float)TILE_SIZE, (float)TILE_SIZE};
+            newChest.uniqueID = chestID;
+            newChest.isOpen   = false;
+            newChest.content  = {itemID, itemName, "", 1};
+            FillItemData(newChest.content);
+ 
+            for (int j = 0; j < historyCount; j++) {
+                if (openedHistory[j] == chestID) {
+                    newChest.isOpen       = true;
+                    newChest.content.id   = 0;
+                    break;
+                }
+            }
+ 
+            if (chestCount < MAX_CHESTS) chests[chestCount++] = newChest;
+        }
+
+        // ENEMIES
+        else if (token == "ENEMY") {
+            int gridX, gridY, instanceID, typeID;
+            float speed;
+            file >> gridX >> gridY >> instanceID >> typeID;
+ 
+            float px = (float)(gridX * TILE_SIZE);
+            float py = (float)(gridY * TILE_SIZE);
+            float offsetX = (TILE_SIZE - 20.0f) / 2.0f;
+            float offsetY = TILE_SIZE - 20.0f;
+ 
+            Enemy newEnemy;
+            newEnemy.bounds   = {px + offsetX, py + offsetY, 20.0f, 20.0f};
+            newEnemy.uniqueID = instanceID;
+            newEnemy.typeID   = typeID;
+            newEnemy.spawnX   = px + offsetX;
+            newEnemy.spawnY   = py + offsetY;
+            newEnemy.isDefeated = false;
+
+            FillEnemyData(newEnemy);
+ 
+            /* int roll = rand() % 100;
+            if (roll < 50) newEnemy.lootDrop = {ITEM_STRENGTH_POTION, "Strength Potion", "Deal +10 damage for 2 turns", 1};
+            else if (roll < 80) newEnemy.lootDrop = {ITEM_DEFENSE_POTION, "Defense Potion", "Gain +50 max HP", 1};
+            else newEnemy.lootDrop = {ITEM_IRON_KEY, "Iron Key", "Opens locked portals and doors", 1}; */
+ 
+            for (int j = 0; j < defeatedCount; j++) {
+                if (defeatedHistory[j] == instanceID) {
+                    newEnemy.isDefeated = true;
+                    newEnemy.hasLoot    = false;
+                    break;
+                }
+            }
+ 
+            if (enemyCount < MAX_ENEMIES) enemies[enemyCount++] = newEnemy;
+        }
+
+        // SIGNPOSTS
+        else if (token == "SIGNPOST") {
+            int gridX, gridY, numLines;
+            file >> gridX >> gridY >> numLines;
+ 
+            Signpost newSign;
+            newSign.bounds    = {(float)(gridX * TILE_SIZE), (float)(gridY * TILE_SIZE), (float)TILE_SIZE, (float)TILE_SIZE};
+            newSign.lineCount = 0;
+ 
+            std::string dummy;
+            std::getline(file, dummy); // Eat the invisible newline character
+ 
+            for (int j = 0; j < numLines; j++) {
+                std::string line;
+                std::getline(file, line);
+                if (newSign.lineCount < MAX_LINES_PER_SIGNPOST) {
+                    newSign.dialogue[newSign.lineCount++] = line;
+                }
+            }
+            if (signpostCount < MAX_SIGNPOSTS) signposts[signpostCount++] = newSign;
+        }
+
+        // SPAWN COORDINATES
+        else if (token == "SPAWN") {
+            int gridX, gridY;
+            file >> gridX >> gridY;
+            
+            // The engine automatically converts your easy grid numbers into ugly pixel numbers
+            defaultSpawnX = (float)(gridX * TILE_SIZE);
+            defaultSpawnY = (float)(gridY * TILE_SIZE);
         }
     }
  
@@ -260,7 +311,7 @@ bool GameMap::LoadMap(const std::string& filename) {
 // PORTALS
 // -------------------------------------------------------------------
 void GameMap::AddPortal(Rectangle bounds, std::string targetMap,
-                        float spawnX, float spawnY, bool requiresKey) {
+                        float spawnX, float spawnY, bool requiresKey, int requiredItemID) {
     if (portalCount >= MAX_PORTALS) {
         std::cout << "WARNING: Max portals reached." << std::endl;
         return;
@@ -271,17 +322,17 @@ void GameMap::AddPortal(Rectangle bounds, std::string targetMap,
     p.spawnX      = spawnX;
     p.spawnY      = spawnY;
     p.requiresKey = requiresKey;
+    p.requiredItemID = requiredItemID;
     portals[portalCount++] = p;
 }
  
-bool GameMap::CheckPortals(Rectangle playerBounds, Portal& outPortal) {
+Portal* GameMap::CheckPortals(Rectangle playerBounds) {
     for (int i = 0; i < portalCount; i++) {
         if (CheckCollisionRecs(playerBounds, portals[i].bounds)) {
-            outPortal = portals[i];
-            return true;
+            return &portals[i];
         }
     }
-    return false;
+    return nullptr;
 }
  
 // -------------------------------------------------------------------
@@ -294,12 +345,26 @@ void GameMap::Draw() {
             if (grid[y][x] == 1)
                 DrawTexture(wallSprite, x * TILE_SIZE, y * TILE_SIZE, WHITE);
  
-    // Portals — locked portals tinted red so the player can tell
+    // Portals
     for (int i = 0; i < portalCount; i++) {
         int drawX = (int)portals[i].bounds.x;
         int drawY = (int)portals[i].bounds.y;
-        Color tint = portals[i].requiresKey ? RED : WHITE;
-        DrawTexture(portalSprite, drawX, drawY, tint);
+        if (portals[i].requiresKey) {
+            DrawTexture(portalLockedSprite, drawX, drawY, WHITE);
+        } else {
+            DrawTexture(portalSprite, drawX, drawY, WHITE);
+        }
+    }
+
+    // Gates
+    for (int i = 0; i < gateCount; i++) {
+        int drawX = (int)gates[i].bounds.x;
+        int drawY = (int)gates[i].bounds.y;
+        if (gates[i].isLocked) {
+            DrawTexture(gateLockedSprite, drawX, drawY, WHITE);
+        } else {
+            DrawTexture(gateSprite, drawX, drawY, WHITE);
+        }
     }
  
     // Chests
@@ -321,8 +386,17 @@ void GameMap::Draw() {
         if (enemies[i].isDefeated) continue;
         int drawX = (int)(enemies[i].bounds.x - 6.0f);
         int drawY = (int)(enemies[i].bounds.y - 12.0f);
-        DrawTexture(enemySprite, drawX, drawY, isAggro ? RED : WHITE);
-        DrawRectangleLinesEx(enemies[i].bounds, 1, RED); // Debug hitbox
+
+        Texture2D currentSprite;
+        switch (enemies[i].typeID) {
+            case 1:  currentSprite = NULLByteSprite; break;
+            case 2:  currentSprite = LostArraySprite; break;
+            case 3:  currentSprite = PointerGlitchSprite; break;
+            default: currentSprite = NULLByteSprite; break; // Fallback just in case
+        }
+
+        DrawTexture(currentSprite, drawX, drawY, isAggro ? RED : WHITE);
+        // DrawRectangleLinesEx(enemies[i].bounds, 1, RED); // Debug hitbox
     }
 }
  
@@ -336,6 +410,7 @@ bool GameMap::IsSolid(int targetX, int targetY) {
 }
  
 bool GameMap::CheckCollision(Rectangle rect) {
+    // Wall Collision
     int startCol = (int)(rect.x / TILE_SIZE);
     int endCol   = (int)((rect.x + rect.width)  / TILE_SIZE);
     int startRow = (int)(rect.y / TILE_SIZE);
@@ -343,6 +418,15 @@ bool GameMap::CheckCollision(Rectangle rect) {
     for (int row = startRow; row <= endRow; row++)
         for (int col = startCol; col <= endCol; col++)
             if (IsSolid(col, row)) return true;
+
+    // Gate Collision
+    for (int i = 0; i < gateCount; i++) {
+        // If the gate is locked AND the player's rectangle hits it, block them!
+        if (gates[i].isLocked && CheckCollisionRecs(rect, gates[i].bounds)) {
+            return true; 
+        }
+    }
+
     return false;
 }
  
@@ -498,8 +582,13 @@ void GameMap::ResetDefeatedEnemies() {
 // BFS PATHFINDER
 // -------------------------------------------------------------------
 Point2D GameMap::GetNextPathStep(int startX, int startY, int targetX, int targetY) {
+    // GUARD CLAUSE, START AND TARGET WONT BE AT THE SAME LOCATION
+    if (startX == targetX && startY == targetY) {
+        return {startX, startY};
+    }
     Point2D bfsQueue[MAP_ROWS * MAP_COLS];
     int front = 0, back = 0;
+
  
     bool    visited[MAP_ROWS][MAP_COLS] = {};
     Point2D parent [MAP_ROWS][MAP_COLS];
@@ -535,4 +624,45 @@ Point2D GameMap::GetNextPathStep(int startX, int startY, int targetX, int target
         step = parent[step.y][step.x];
     }
     return step;
+}
+
+void GameMap::ResetProgress() {
+    historyCount = 0;
+    defeatedCount = 0;
+    unlockedPortalCount = 0;
+    unlockedGateCount = 0;
+}
+
+void GameMap::MarkPortalUnlocked(const std::string& targetMap) {
+    if (unlockedPortalCount < 50) {
+        unlockedPortals[unlockedPortalCount] = targetMap;
+        unlockedPortalCount++;
+    }
+}
+
+Gate* GameMap::CheckGateInteraction(Rectangle playerBounds) {
+    // Expand the player's reach by 10 pixels in all directions
+    Rectangle reach = {
+        playerBounds.x - 10,
+        playerBounds.y - 10,
+        playerBounds.width  + 20,
+        playerBounds.height + 20
+    };
+    
+    for (int i = 0; i < gateCount; i++) {
+        // Only allow interacting with locked gates
+        if (gates[i].isLocked && CheckCollisionRecs(reach, gates[i].bounds)) {
+            return &gates[i];
+        }
+    }
+    return nullptr;
+}
+
+void GameMap::MarkGateUnlocked(Gate* gate) {
+    gate->isLocked = false;
+    
+    // Save it to history so it doesn't respawn when you leave and come back
+    if (unlockedGateCount < 100) {
+        unlockedGates[unlockedGateCount++] = gate->uniqueID;
+    }
 }

@@ -358,3 +358,9 @@ bool BattleSystem::IsBattleOver() const {
 BattleState BattleSystem::GetState() const {
     return currentState;
 }
+
+void BattleSystem::ResetPlayerStats() {
+    PlayerMaxHP = 100;
+    PlayerHP = 100;
+    PlayerAttack = 10;
+}

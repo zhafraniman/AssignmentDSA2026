@@ -24,6 +24,15 @@ struct Portal {
     float       spawnX;
     float       spawnY;
     bool        requiresKey;   // If true, player must hold an Iron Key to enter
+    int         requiredItemID;
+};
+
+#define MAX_GATES 20
+struct Gate {
+    Rectangle bounds;
+    int uniqueID;
+    bool isLocked;
+    int requiredItemID;
 };
 
 #define MAX_SIGNPOSTS 10
@@ -39,13 +48,22 @@ struct Signpost {
 struct Enemy {
     Rectangle bounds;
     int uniqueID;
+    int typeID;
+
+
+    // Enemies Stat
+    std::string name; 
+    int maxHp;        
+    int hp;           
+    int attack;
     float speed;
     int aggroRange;
     bool isDefeated;
-    float spawnX;
-    float spawnY;
     Item lootDrop;
     bool hasLoot;
+
+    float spawnX;
+    float spawnY;
 };
 
 struct Point2D {
@@ -58,13 +76,26 @@ private:
     int grid[MAP_ROWS][MAP_COLS];
     Texture2D wallSprite; 
     Texture2D portalSprite;
+    Texture2D portalLockedSprite;
+    Texture2D gateSprite;
+    Texture2D gateLockedSprite;
     Texture2D chestClosedSprite; 
     Texture2D chestOpenSprite;
     Texture2D signSprite;
-    Texture2D enemySprite;
     
-    Portal portals[MAX_PORTALS]; 
+    Texture2D NULLByteSprite;
+    Texture2D LostArraySprite;
+    Texture2D PointerGlitchSprite;
+    
+    Portal portals[MAX_PORTALS];
+    std::string unlockedPortals[50];
     int portalCount;      
+    int unlockedPortalCount;
+
+    Gate gates[MAX_GATES];
+    int gateCount;
+    int unlockedGates[100]; 
+    int unlockedGateCount;
 
     Chest chests[MAX_CHESTS];
     int chestCount;
@@ -87,12 +118,21 @@ public:
     bool LoadMap(const std::string& filename); 
     bool IsSolid(int targetX, int targetY);
     bool CheckCollision(Rectangle rect);
+    void ResetProgress();
     void Draw();
+    
+    // Default spawn coordinate
+    float defaultSpawnX = 0.0f;
+    float defaultSpawnY = 0.0f;
 
     // requiresKey defaults to false for backward compatibility
     void AddPortal(Rectangle bounds, std::string targetMap,
-                   float spawnX, float spawnY, bool requiresKey = false);
-    bool CheckPortals(Rectangle playerBounds, Portal& outPortal);
+                   float spawnX, float spawnY, bool requiresKey = false, int requiredItemID = 0);
+    Portal* CheckPortals(Rectangle playerBounds);
+    void MarkPortalUnlocked(const std::string& targetMap);
+
+    Gate* CheckGateInteraction(Rectangle playerBounds);
+    void MarkGateUnlocked(Gate* gate);
 
     void AddChest(Rectangle bounds, Item content);
     Chest*    CheckChestInteraction(Rectangle playerBounds);

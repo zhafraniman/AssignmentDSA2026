@@ -15,19 +15,31 @@ struct Item {
     int quantity;     // How many of this item
 };
 
+#define MAX_LEADERBOARD 10
+struct ScoreEntry {
+    std::string name;
+    int score;
+    int timeSeconds;
+};
+
 // Item ID Constants
 #define ITEM_HEALTH_POTION 1
 #define ITEM_STRENGTH_POTION 2
 #define ITEM_DEFENSE_POTION 3
 #define ITEM_IRON_KEY 4
+#define ITEM_PRISON_KEY 5
+#define ITEM_MASTER_KEY 15
 
 // Loot table for enemies and chests
 #define STRENGTH_POTION_DAMAGE_BONUS 10
 #define STRENGTH_POTION_DURATION 2  // Turns
 #define DEFENSE_POTION_HP_BONUS 50
-#define IRON_KEY_ID 4
+// #define IRON_KEY_ID 4
 
 enum GameState {
+    STATE_MAIN_MENU,
+    STATE_NAME_INPUT,
+    STATE_LEADERBOARD,
     STATE_OVERWORLD,
     STATE_BATTLE,
     STATE_MENU,

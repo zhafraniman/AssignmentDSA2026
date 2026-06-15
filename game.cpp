@@ -1,26 +1,29 @@
 #include "game.h"
+#include "config.h"
 #include <fstream>
+#include <raylib.h>
 
 // --- INITIALIZATION ---
-Game::Game() : myPlayer(388.0f, 256.0f) {
-    worldMap.LoadMap("src/levels/level1.txt");
+Game::Game() : myPlayer(0.0f, 0.0f) {
+    worldMap.LoadMap("src/levels/spawn.txt");
 
-    currentState = STATE_OVERWORLD;
+    myPlayer.Teleport(worldMap.defaultSpawnX, worldMap.defaultSpawnY);
+
+    currentState = STATE_MAIN_MENU;
+    mainMenuSelection = 0;
+    playerNameInput = "";
+    leaderboardCount = 0;
+    playTimer = 0.0f;
+    gameBeat = false;
     currentEnemy = nullptr;
+    fileScore = 0;
 
     // FIX: Prevent portal spam loop
     wasTouchingPortal = false;
-
-    std::ifstream inputFile("usersfile.txt");
-    inputFile >> fileScore;
-    inputFile.close();
 }
 
 // --- CLEANUP ---
 Game::~Game() {
-    std::ofstream outputFile("usersfile.txt", std::ios::out);
-    outputFile << fileScore;
-    outputFile.close();
 }
 
 // --- MAIN LOOP ---
@@ -51,8 +54,81 @@ void Game::ProcessInput() {
 
 // --- GAME LOGIC ---
 void Game::Update() {
+    // Only tick the timer if we are actually playing the game
+    if (currentState == STATE_OVERWORLD || currentState == STATE_BATTLE) {
+        playTimer += GetFrameTime();
+    }
 
     switch (currentState) {
+        // ============================================================
+        case STATE_MAIN_MENU: {
+            if (IsKeyPressed(KEY_UP) || IsKeyPressed(KEY_W)) {
+                mainMenuSelection--;
+                if (mainMenuSelection < 0) mainMenuSelection = 1;
+            }
+            if (IsKeyPressed(KEY_DOWN) || IsKeyPressed(KEY_S)) {
+                mainMenuSelection++;
+                if (mainMenuSelection > 1) mainMenuSelection = 0;
+            }
+            if (IsKeyPressed(KEY_ENTER)) {
+                if (mainMenuSelection == 0) {
+                    currentState = STATE_NAME_INPUT;
+                    playerNameInput = ""; // Reset name field
+                } else {
+                    LoadLeaderboard(); // Load fresh data before showing
+                    currentState = STATE_LEADERBOARD;
+                }
+            }
+            break;
+        }
+
+        // ============================================================
+        case STATE_NAME_INPUT: {
+            // Raylib function to grab pressed characters (for typing)
+            int key = GetCharPressed();
+
+            // Check if more characters have been pressed on the same frame
+            while (key > 0) {
+                // Only allow standard typing characters and limit length
+                if ((key >= 32) && (key <= 125) && (playerNameInput.length() < 12)) {
+                    playerNameInput += (char)key;
+                }
+                key = GetCharPressed(); // Check next key in queue
+            }
+
+            // Handle backspace
+            if (IsKeyPressed(KEY_BACKSPACE) && playerNameInput.length() > 0) {
+                playerNameInput.pop_back(); 
+            }
+
+            // Confirm Name
+            if (IsKeyPressed(KEY_ENTER) && playerNameInput.length() > 0) {
+                myPlayer.SetName(playerNameInput);
+
+                // FULL GAME RESET
+                worldMap.ResetProgress();                                                      // 1. Erase chest/enemy history
+                worldMap.LoadMap("src/levels/spawn.txt");                             // 2. Load the map first to grab SPAWN point                                                                               
+                myPlayer.Reset(worldMap.defaultSpawnX, worldMap.defaultSpawnY); // 3. Reset player stats using the new map's spawn coordinates
+                battle.ResetPlayerStats();                                                     // 4. Reset battle HP/Attack
+                fileScore = 0;
+                playTimer = 0.0f;
+                currentState = STATE_OVERWORLD;
+            } 
+            
+            // Go back
+            if (IsKeyPressed(KEY_ESCAPE)) {
+                currentState = STATE_MAIN_MENU;
+            }
+            break;
+        }
+
+        // ============================================================
+        case STATE_LEADERBOARD: {
+            if (IsKeyPressed(KEY_ESCAPE) || IsKeyPressed(KEY_ENTER)) {
+                currentState = STATE_MAIN_MENU;
+            }
+            break;
+        }
 
         // ============================================================
         case STATE_OVERWORLD: {
@@ -79,10 +155,11 @@ void Game::Update() {
             }
 
             // --------------------------------------------------------
-            // CHEST INTERACTION (E)
+            // CHEST/GATE INTERACTION (E)
             // --------------------------------------------------------
             if (IsKeyPressed(KEY_E)) {
 
+                // Chests
                 Chest* nearbyChest =
                     worldMap.CheckChestInteraction(myPlayer.GetBounds());
 
@@ -114,6 +191,28 @@ void Game::Update() {
                             "Your inventory is full!"
                         );
 
+                        currentState = STATE_DIALOGUE;
+                    }
+                }
+
+                // Gates
+                Gate* nearbyGate = worldMap.CheckGateInteraction(myPlayer.GetBounds());
+
+                if (nearbyGate != nullptr && nearbyGate->isLocked) {
+                    
+                    // Check if the player has at least 1 of the specific required item
+                    if (myPlayer.GetItemQuantity(nearbyGate->requiredItemID) > 0) {
+                        
+                        // Consume the specific item
+                        myPlayer.UseItem(nearbyGate->requiredItemID);
+                        worldMap.MarkGateUnlocked(nearbyGate);
+                        
+                        dialogueBox.Start();
+                        dialogueBox.Enqueue("You unlocked the gate.");
+                        currentState = STATE_DIALOGUE;
+                    } else {
+                        dialogueBox.Start();
+                        dialogueBox.Enqueue("The gate is locked.");
                         currentState = STATE_DIALOGUE;
                     }
                 }
@@ -151,92 +250,61 @@ void Game::Update() {
             // FIXED: Prevent infinite dialogue spam
             // --------------------------------------------------------
             {
-                Portal hitPortal;
-
-                bool touchingPortal =
-                    worldMap.CheckPortals(
-                        myPlayer.GetBounds(),
-                        hitPortal
-                    );
+                // We use the pointer method to directly access the real portal
+                Portal* hitPortal = worldMap.CheckPortals(myPlayer.GetBounds());
+                bool touchingPortal = (hitPortal != nullptr);
 
                 // Trigger ONLY when entering portal
-                if (touchingPortal &&
-                    !wasTouchingPortal) {
+                if (touchingPortal && !wasTouchingPortal) {
 
                     // ---------------- LOCKED PORTAL ----------------
-                    if (hitPortal.requiresKey &&
-                        !myPlayer.HasIronKey()) {
+                    if (hitPortal->requiresKey) {
+                        
+                        if (myPlayer.GetItemQuantity(hitPortal->requiredItemID) == 0) {
+                            dialogueBox.Start();
+                            dialogueBox.Enqueue("The door is locked.");
+                            currentState = STATE_DIALOGUE;
+                        } 
+                        else {
+                            // Unlock the real door permanently!
+                            myPlayer.UseItem(hitPortal->requiredItemID);
+                            hitPortal->requiresKey = false;
 
-                        dialogueBox.Start();
-
-                        dialogueBox.Enqueue(
-                            "The door is locked."
-                        );
-
-                        dialogueBox.Enqueue(
-                            "You need an Iron Key to pass."
-                        );
-
-                        currentState = STATE_DIALOGUE;
+                            worldMap.MarkPortalUnlocked(hitPortal->targetMap);
+                            
+                            dialogueBox.Start();
+                            dialogueBox.Enqueue("You unlocked the door.");
+                            currentState = STATE_DIALOGUE;
+                        }
                     }
 
                     // ---------------- NORMAL PORTAL ----------------
-                    else {
+                    if (!hitPortal->requiresKey) {
+                        // 1. SAVE THE DATA BEFORE WE OVERWRITE THE MAP!
+                        std::string nextMap = hitPortal->targetMap;
+                        float destX = hitPortal->spawnX;
+                        float destY = hitPortal->spawnY;
 
-                        // Consume key if needed
-                        if (hitPortal.requiresKey) {
+                        // 2. Load next map safely
+                        worldMap.LoadMap(nextMap);
 
-                            myPlayer.UseItem(
-                                ITEM_IRON_KEY
-                            );
-                        }
+                        // 3. Teleport player safely
+                        myPlayer.Teleport(destX, destY);
 
-                        // Load next map
-                        worldMap.LoadMap(
-                            hitPortal.targetMap
-                        );
-
-                        // Teleport player
-                        myPlayer.Teleport(
-                            hitPortal.spawnX,
-                            hitPortal.spawnY
-                        );
-
-                        // Safety:
-                        // Move away if player spawns on enemy
-                        const float offX[] = {
-                            50.0f,
-                           -50.0f,
-                             0.0f,
-                             0.0f
-                        };
-
-                        const float offY[] = {
-                             0.0f,
-                             0.0f,
-                           -50.0f,
-                            50.0f
-                        };
+                        // Safety collision check...
+                        const float offX[] = { 50.0f, -50.0f, 0.0f, 0.0f };
+                        const float offY[] = { 0.0f, 0.0f, -50.0f, 50.0f };
 
                         for (int i = 0; i < 4; i++) {
-
-                            if (worldMap.CheckEnemyCollision(
-                                    myPlayer.GetBounds()
-                                ) == nullptr)
-                            {
+                            if (worldMap.CheckEnemyCollision(myPlayer.GetBounds()) == nullptr) {
                                 break;
                             }
-
-                            myPlayer.Teleport(
-                                hitPortal.spawnX + offX[i],
-                                hitPortal.spawnY + offY[i]
-                            );
+                            myPlayer.Teleport(destX + offX[i], destY + offY[i]);
                         }
                     }
-                }
+                } // <--- This bracket is what was misplaced previously!
 
-                // IMPORTANT:
-                // Update AFTER processing
+                // IMPORTANT: Update AFTER processing
                 wasTouchingPortal = touchingPortal;
             }
 
@@ -275,8 +343,13 @@ void Game::Update() {
                     dialogueBox.Dequeue();
 
                     if (!dialogueBox.IsActive()) {
-
-                        currentState = STATE_OVERWORLD;
+                        // Check if we beat the game
+                        if (gameBeat) {
+                            currentState = STATE_MAIN_MENU;
+                            gameBeat = false; // Reset for the next playthrough
+                        } else {
+                            currentState = STATE_OVERWORLD;
+                        }
                     }
 
                 } else {
@@ -321,7 +394,7 @@ void Game::Update() {
                         worldMap.ResetDefeatedEnemies();
 
                         worldMap.LoadMap(
-                            "src/levels/level1.txt"
+                            "src/levels/spawn.txt"
                         );
 
                         myPlayer.Teleport(
@@ -347,6 +420,13 @@ void Game::Update() {
                         std::string lootMsg = "";
 
                         if (currentEnemy != nullptr) {
+                            // Check if this was the Final Boss!
+                            if (currentEnemy->uniqueID == 999) {
+                                fileScore += 1000; // Big bonus for winning
+                                SaveToLeaderboard();
+                                gameBeat = true;
+                                lootMsg = "You defeated the Final Boss! Score saved.";
+                            }
 
                             Item loot =
                                 worldMap.GetEnemyLoot(
@@ -405,10 +485,11 @@ void Game::Update() {
     }
 }
 
-// --- RENDERING ---
+// RENDERING
 void Game::Draw() {
 
     BeginDrawing();
+    ClearBackground(BgColor);
 
     if (currentState == STATE_BATTLE) {
 
@@ -420,39 +501,82 @@ void Game::Draw() {
             currentState,
             myPlayer,
             worldMap,
-            dialogueBox
-        );
-    }
-
-    // ------------------------------------------------------------
-    // SCORE DISPLAY
-    // ------------------------------------------------------------
-    if (currentState != STATE_BATTLE) {
-
-        DrawRectangle(
-            50,
-            50,
-            100,
-            100,
-            YELLOW
-        );
-
-        DrawRectangleLines(
-            50,
-            50,
-            100,
-            100,
-            BLACK
-        );
-
-        DrawText(
-            std::to_string(fileScore).c_str(),
-            55,
-            60,
-            50,
-            BLACK
-        );
+            dialogueBox,
+            fileScore,
+            mainMenuSelection,
+            playerNameInput,
+            leaderboard,
+            leaderboardCount);
     }
 
     EndDrawing();
+}
+
+// LOADING LEADERBOARD
+void Game::LoadLeaderboard() {
+    std::ifstream file("src/leaderboard.txt");
+    leaderboardCount = 0;
+
+    if (file.is_open()) {
+        std::string name;
+        int score, timeSec;
+        
+        // Notice we added timeSec here!
+        while (file >> name >> score >> timeSec && leaderboardCount < MAX_LEADERBOARD) {
+            leaderboard[leaderboardCount].name = name;
+            leaderboard[leaderboardCount].score = score;
+            leaderboard[leaderboardCount].timeSeconds = timeSec;
+            leaderboardCount++;
+        }
+        file.close();
+        SortLeaderboard(); // Automatically sorts whenever loaded
+    }
+}
+
+// SAVE TO LEADERBOARD
+void Game::SaveToLeaderboard() {
+    // 1. Load the current top scores
+    LoadLeaderboard(); 
+    
+    // 2. Try to add our new score
+    if (leaderboardCount < MAX_LEADERBOARD) {
+        // If the board isn't full yet, just put it at the end
+        leaderboard[leaderboardCount].name = myPlayer.GetName();
+        leaderboard[leaderboardCount].score = fileScore;
+        leaderboard[leaderboardCount].timeSeconds = (int)playTimer;
+        leaderboardCount++;
+    } else {
+        // If the board IS full, replace the worst score (at the very bottom) ONLY if we beat it
+        if (fileScore > leaderboard[MAX_LEADERBOARD - 1].score) {
+            leaderboard[MAX_LEADERBOARD - 1].name = myPlayer.GetName();
+            leaderboard[MAX_LEADERBOARD - 1].score = fileScore;
+            leaderboard[MAX_LEADERBOARD - 1].timeSeconds = (int)playTimer;
+        }
+    }
+    
+    // 3. Sort the array so the new score bubbles up to its correct rank
+    SortLeaderboard();
+    
+    // 4. Overwrite the file with the newly sorted Top 10 list
+    std::ofstream file("leaderboard.txt");
+    for (int i = 0; i < leaderboardCount; i++) {
+        file << leaderboard[i].name << " " << leaderboard[i].score << " " << leaderboard[i].timeSeconds << "\n";
+    }
+    file.close();
+}
+
+// SORTING LEADERBOARD BY DECENDING ORDER
+void Game::SortLeaderboard() {
+    // Manual Bubble Sort Implementation (Descending Order)
+    for (int i = 0; i < leaderboardCount - 1; i++) {
+        for (int j = 0; j < leaderboardCount - i - 1; j++) {
+            
+            // If the current score is LESS than the next score, swap them!
+            if (leaderboard[j].score < leaderboard[j+1].score) {
+                ScoreEntry temp = leaderboard[j];
+                leaderboard[j] = leaderboard[j+1];
+                leaderboard[j+1] = temp;
+            }
+        }
+    }
 }

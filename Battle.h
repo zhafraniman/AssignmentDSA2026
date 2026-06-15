@@ -52,6 +52,7 @@ private:
  
 public:
     BattleSystem();
+    void ResetPlayerStats();
  
     // Accessors used by Game for health reset on PLAYER_LOSE
     int& get_healing() { return PlayerHP; }

@@ -46,7 +46,7 @@ Rectangle Player::GetBounds() const {
  
 void Player::Draw() {
     DrawTextureV(sprite, position, WHITE);
-    DrawRectangleLinesEx(GetBounds(), 1, RED); // Debug hitbox
+    // DrawRectangleLinesEx(GetBounds(), 1, RED); // Debug hitbox
 }
  
 void Player::Teleport(float newX, float newY) {
@@ -85,4 +85,16 @@ bool Player::HasIronKey() const {
  
 int Player::GetItemQuantity(int itemID) const {
     return inventory.GetItemQuantity(itemID);
+}
+
+void Player::SetName(const std::string& newName) {
+    name = newName;
+}
+
+void Player::Reset(float startX, float startY) {
+    position = { startX, startY };
+    level = 1;
+    maxHp = 25;
+    hp    = 25;
+    inventory.Clear(); // Empties your linked list!
 }

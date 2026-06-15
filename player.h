@@ -21,18 +21,22 @@ private:
 
 public:
     Player(float startX, float startY);
-    ~Player();        
+    ~Player();
     
     void Update(GameMap& map, Vector2 inputDirection);
     void Draw();
     Rectangle GetBounds() const;
     void Teleport(float newX, float newY);
+    void Reset(float startX, float startY);
 
-    // Getters - Read-only access to private variables
+    // Getters
     std::string GetName() const { return name; }
     int GetLevel() const { return level; }
     int GetHP() const { return hp; }
     int GetMaxHP() const { return maxHp; }
+
+    // Setters
+    void SetName(const std::string& newName);
 
     // Inventory methods
     bool AddItem(Item newItem);
