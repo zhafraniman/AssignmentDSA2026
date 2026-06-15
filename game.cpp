@@ -112,12 +112,12 @@ void Game::Update() {
                 // FULL GAME RESET
                 myPlayer.Reset(388.0f, 256.0f);            // 1. Reset player stats & inventory
                 worldMap.ResetProgress();                  // 2. Erase chest/enemy history
-                worldMap.LoadMap("src/levels/level1.txt"); // 3. Reload the first map
+                worldMap.LoadMap("src/levels/spawn.txt"); // 3. Reload the first map
                 battle.ResetPlayerStats();                 // 4. Reset battle HP/Attack
                 fileScore = 0;
                 playTimer = 0.0f;
                 currentState = STATE_OVERWORLD;
-            }
+            } 
             
             // Go back
             if (IsKeyPressed(KEY_ESCAPE)) {
@@ -376,7 +376,7 @@ void Game::Update() {
                         worldMap.ResetDefeatedEnemies();
 
                         worldMap.LoadMap(
-                            "src/levels/level1.txt"
+                            "src/levels/spawn.txt"
                         );
 
                         myPlayer.Teleport(
@@ -496,7 +496,7 @@ void Game::Draw() {
 
 // LOADING LEADERBOARD
 void Game::LoadLeaderboard() {
-    std::ifstream file("leaderboard.txt");
+    std::ifstream file("src/leaderboard.txt");
     leaderboardCount = 0;
 
     if (file.is_open()) {
