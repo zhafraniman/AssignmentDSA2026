@@ -23,7 +23,8 @@ private:
     void DrawNameInput(const std::string& currentName);
     void DrawLeaderboard(ScoreEntry* leaderboard, int count);
 
-    Texture2D bgTexture; 
+    Texture2D bgTexture;
+    Texture2D titleSprite;
 };
 
 #endif
