@@ -12,6 +12,7 @@ BattleSystem::BattleSystem() {
     selectedOption  = 0;
     itemMenuOpen    = false;
     itemSubMenuOption = 0;
+    isBossBattle    = false;
  
     enemyMaxHp  = 50;
     enemyAttack = 6;
@@ -235,7 +236,8 @@ void BattleSystem::Update(Player& player) {
     turnTimer += GetFrameTime();
     if (turnTimer < turnDelay) return;
  
-    Enemy_Damage(player);
+    if (isBossBattle) BossTurn(player);
+    else              Enemy_Damage(player);
     turnTimer = 0.0f;
 }
  
@@ -248,12 +250,79 @@ void BattleSystem::StartBattle() {
     selectedOption    = 0;
     itemMenuOpen      = false;   // Always close sub-menu on battle start
     itemSubMenuOption = 0;
- 
+    isBossBattle      = false;   // ordinary enemy
+
+    enemyMaxHp    = 50;
+    enemyAttack   = 6;
     enemyHp       = enemyMaxHp;
     battleMessage = "A wild enemy appeared!";
  
     playerStrengthEffect = PotionEffect(EFFECT_NONE, 0, 0);
     playerDefenseEffect  = PotionEffect(EFFECT_NONE, 0, 0);
+}
+
+// ------------------------------------------------------------
+// FINAL BOSS — the enemy turn is driven by the Boss AI, which
+// uses a hand-built Queue (attack plan), Stack (rage charges) and
+// binary decision Tree (move selection) to fight back.
+// ------------------------------------------------------------
+void BattleSystem::StartBossBattle() {
+    currentState      = PLAYER_TURN;
+    playerDefending   = false;
+    selectedOption    = 0;
+    itemMenuOpen      = false;
+    itemSubMenuOption = 0;
+    isBossBattle      = true;
+
+    enemyname     = "The Compiler";
+    enemyMaxHp    = 150;
+    enemyAttack   = 0;            // damage now comes from the Boss AI, not this
+    enemyHp       = enemyMaxHp;
+    battleMessage = "THE COMPILER awakens. It will attack with Stacks, Trees and Queues!";
+
+    boss.Reset();                 // empty the attack queue + rage stack
+
+    playerStrengthEffect = PotionEffect(EFFECT_NONE, 0, 0);
+    playerDefenseEffect  = PotionEffect(EFFECT_NONE, 0, 0);
+}
+
+// One boss turn: ask the Boss AI what it does, then apply the damage here
+// (so DEFEND and the defense potion are handled in one place).
+void BattleSystem::BossTurn(Player& player) {
+    (void)player;  // player stats are read via the members below
+
+    int bossPct   = (enemyMaxHp > 0) ? (enemyHp * 100) / enemyMaxHp : 0;
+    int maxHp     = GetActualPlayerMaxHP();
+    int playerPct = (maxHp > 0) ? (PlayerHP * 100) / maxHp : 0;
+
+    BossDecision dec = boss.TakeTurn(bossPct, playerPct, playerDefending);
+
+    int damage = dec.damage;
+
+    // DEFEND halves damage — unless the move explicitly pierces guard.
+    if (playerDefending) {
+        if (!dec.ignoresDefend) damage /= 2;
+        playerDefending = false;
+    }
+
+    // Defense potion: 15% damage reduction while active.
+    if (playerDefenseEffect.IsActive()) {
+        damage -= (damage * 15) / 100;
+    }
+
+    battleMessage = dec.text;
+
+    if (damage > 0) {
+        PlayerHP -= damage;
+        if (PlayerHP <= 0) {
+            PlayerHP      = 0;
+            currentState  = PLAYER_LOSE;
+            battleMessage = "The Compiler crashed you. You Lose!";
+            return;
+        }
+    }
+
+    currentState = PLAYER_TURN;
 }
  
 // ------------------------------------------------------------
@@ -265,12 +334,38 @@ void BattleSystem::Draw(const Player& player) {
     const int screenW = 800;
  
     // --- Title ---
-    DrawText("BATTLE", 320, 30, 40, WHITE);
+    DrawText(isBossBattle ? "BOSS BATTLE" : "BATTLE", isBossBattle ? 250 : 320, 30, 40, WHITE);
  
     // --- Enemy panel ---
     DrawRectangleLines(500, 80, 220, 120, WHITE);
-    DrawText("ENEMY", 565, 90, 28, WHITE);
+    if (isBossBattle) {
+        DrawText(enemyname.c_str(), 512, 90, 24, EnemyColor);
+    } else {
+        DrawText("ENEMY", 565, 90, 28, WHITE);
+    }
     DrawText(TextFormat("HP: %d / %d", enemyHp, enemyMaxHp), 540, 140, 24, WHITE);
+
+    // --- Boss telegraph: upcoming QUEUE + rage STACK ---
+    // Lets the player read what the data structures are doing.
+    if (isBossBattle &&
+        currentState != PLAYER_WIN && currentState != PLAYER_LOSE) {
+
+        DrawText(TextFormat("RAGE STACK: %d charge(s)", boss.ChargeCount()),
+                 500, 205, 16, ORANGE);
+
+        DrawText("INCOMING (queue):", 500, 228, 16, SKYBLUE);
+        int qn = boss.QueuedCount();
+        if (qn == 0) {
+            DrawText("(planning...)", 510, 248, 16, GRAY);
+        } else {
+            std::string line = "";
+            for (int i = 0; i < qn; i++) {
+                if (i > 0) line += " > ";
+                line += boss.PeekLabel(i);
+            }
+            DrawText(line.c_str(), 510, 248, 16, WHITE);
+        }
+    }
  
     // --- Player panel ---
     DrawRectangleLines(60, 260, 250, 120, WHITE);

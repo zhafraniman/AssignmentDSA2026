@@ -147,7 +147,12 @@ void Game::Update() {
 
                 currentEnemy = touchedEnemy;
 
-                battle.StartBattle();
+                // typeID 999 is the final boss — it fights with the
+                // Stack/Tree/Queue-driven AI instead of the basic enemy.
+                if (touchedEnemy->typeID == 999)
+                    battle.StartBossBattle();
+                else
+                    battle.StartBattle();
 
                 currentState = STATE_BATTLE;
 
@@ -317,9 +322,21 @@ void Game::Update() {
             }
 
             // --------------------------------------------------------
-            // DEBUG BATTLE
+            // DEBUG BOSS FIGHT (press B to jump straight to the boss)
             // --------------------------------------------------------
             if (IsKeyPressed(KEY_B)) {
+
+                battle.StartBossBattle();
+
+                currentEnemy = nullptr;
+
+                currentState = STATE_BATTLE;
+            }
+
+            // --------------------------------------------------------
+            // DEBUG NORMAL FIGHT (press N for a standard enemy battle)
+            // --------------------------------------------------------
+            if (IsKeyPressed(KEY_N)) {
 
                 battle.StartBattle();
 

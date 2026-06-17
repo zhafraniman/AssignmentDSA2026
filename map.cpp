@@ -73,6 +73,9 @@ static void FillItemData(Item& item) {
         case ITEM_IRON_KEY:
             item.description = "Opens locked doors";
             break;
+        case ITEM_MASTER_KEY:
+            item.description = "Debug master key - opens the test room";
+            break;
         default:
             item.description = "A mysterious item";
             break;

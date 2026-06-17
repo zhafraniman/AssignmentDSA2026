@@ -4,6 +4,7 @@
 #include "raylib.h"
 #include "player.h"
 #include "Items.h"
+#include "Boss.h"
 #include <string>
  
 enum BattleState {
@@ -47,8 +48,15 @@ private:
     float turnTimer;
     float turnDelay;
  
+    // --- Final boss mode ---
+    // When true, the enemy turn is driven by the Boss AI (Stack/Tree/Queue)
+    // instead of the simple random attack ordinary enemies use.
+    bool isBossBattle;
+    Boss boss;
+
     // Internal helpers
     void HandleItemSubMenu(Player& player);
+    void BossTurn(Player& player);   // boss-mode replacement for Enemy_Damage
  
 public:
     BattleSystem();
@@ -59,6 +67,7 @@ public:
     int  max_HP()      { return PlayerMaxHP; }
  
     void StartBattle();
+    void StartBossBattle();   // begins the final-boss encounter (DSA-driven AI)
     void Update(Player& player);
     void Enemy_Damage(Player& player);
     void Player_Damage(Player& player);
