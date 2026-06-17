@@ -1,9 +1,9 @@
 #include "Boss.h"
 #include <cstdlib>
 
-// ============================================================
+
 //  QUEUE  (circular array) — FIFO attack plan
-// ============================================================
+
 MoveQueue::MoveQueue() { Clear(); }
 
 void MoveQueue::Clear() {
@@ -42,9 +42,9 @@ BossMove MoveQueue::PeekAt(int i) const {
     return data[idx];
 }
 
-// ============================================================
+
 //  STACK  (array) — LIFO rage charges
-// ============================================================
+
 RageStack::RageStack() { Clear(); }
 
 void RageStack::Clear()      { topIdx = -1; }
@@ -67,9 +67,9 @@ int RageStack::Peek() const {
     return data[topIdx];
 }
 
-// ============================================================
+
 //  TREE  (binary decision tree) — the boss brain
-// ============================================================
+
 DecisionNode* Boss::MakeLeaf(BossMoveType action) {
     DecisionNode* n   = new DecisionNode();
     n->isLeaf         = true;
@@ -114,6 +114,7 @@ void Boss::FreeTree(DecisionNode* node) {
 //     players with HEAVY, and otherwise pokes with SLASH.
 //   - When hurt, it gambles: it CHARGEs (taking no swing) to stack up rage,
 //     then UNLEASHes a huge combo once it has banked 3 charges.
+
 void Boss::BuildBrain() {
     DecisionNode* leafUnleash = MakeLeaf(MOVE_UNLEASH);
     DecisionNode* leafCharge  = MakeLeaf(MOVE_CHARGE);
@@ -153,9 +154,9 @@ BossMoveType Boss::Decide(int bossHpPct, int playerHpPct, bool defending) const 
     return (cur != nullptr) ? cur->action : MOVE_SLASH;
 }
 
-// ============================================================
+
 //  MOVE / COMBO building
-// ============================================================
+
 BossMove Boss::MakeMove(BossMoveType t) const {
     switch (t) {
         case MOVE_SLASH:       return { MOVE_SLASH,       "SLASH",  12 };
@@ -193,9 +194,9 @@ void Boss::PlanCombo(BossMoveType decided) {
     }
 }
 
-// ============================================================
+
 //  BOSS lifecycle
-// ============================================================
+
 Boss::Boss() {
     name = "The Compiler";
     root = nullptr;
