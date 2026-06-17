@@ -36,10 +36,10 @@
 #### Implementation
 Atleast 4 of these:
 - [x] Array (Grid, enemy postion, dialogue and more)
-- [x] Queue (Dialogue Animation, priting characters one by one)
-- [ ] Stack
+- [x] Queue (Dialogue Animation, printing characters one by one, and Boss Fight attack plan)
+- [x] Stack (Boss Fight signature attack)
 - [x] Linked-List (Inventory System)
-- [ ] Tree
+- [x] Tree (Boss fight AI)
 - [ ] Sorting
 - [x] Searching (BFS for enemy detection)
 #### Post Implementation
