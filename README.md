@@ -36,10 +36,10 @@
 #### Implementation
 Atleast 4 of these:
 - [x] Array (Grid, enemy postion, dialogue and more)
-- [x] Queue (Dialogue Animation, printing characters one by one, and Boss Fight attack plan)
-- [x] Stack (Boss Fight signature attack)
+- [x] Queue (Dialogue Animation; Boss attack plan in Boss.cpp)
+- [x] Stack (Boss "rage charge" combo system in Boss.cpp)
 - [x] Linked-List (Inventory System)
-- [x] Tree (Boss fight AI)
+- [x] Tree (Boss decision tree / AI brain in Boss.cpp)
 - [ ] Sorting
 - [x] Searching (BFS for enemy detection)
 #### Post Implementation
@@ -61,6 +61,16 @@ _please add more tasks_
 
 - raylib
 - C++
+
+<hr>
+
+### Testing / Debug Room
+
+A self-contained test room is included for the demo/marking.
+
+- In the spawn level, open the chest in the open hall (left side) to get the **Master Key**, then step on the portal beside it.
+- The debug room (`src/levels/debug.txt`) contains every item in chests, all enemy types (Slime, Skeleton, and the Boss that uses Queue/Stack/Tree), a key-gated alcove (open with the Iron Key found inside), a signpost, and a return portal.
+- Debug hotkeys (overworld): **B** = jump straight into the Boss fight, **N** = jump into a normal fight. Both are repeatable.
 
 <hr>
 
