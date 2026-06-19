@@ -2,7 +2,7 @@
  
 Player::Player(float startX, float startY) {
     position = { startX, startY };
-    speed    = 200.0f;
+    speed    = 150.0f;
     size     = { 20.0f, 12.0f };
     sprite   = LoadTexture("src/sprite/player.png");
  
@@ -97,4 +97,31 @@ void Player::Reset(float startX, float startY) {
     maxHp = 25;
     hp    = 25;
     inventory.Clear(); // Empties your linked list!
+}
+
+void Player::GainExperience(int amount) {
+    // 1. Add the raw experience and score
+    currentExp += amount;
+    
+    // 2. Process Level Ups safely using a loop
+    while (currentExp >= expToNextLevel) {
+        // Deduct the required EXP, but keep the remainder!
+        currentExp -= expToNextLevel; 
+        
+        // Increase Level
+        level++;
+        
+        // Stat Increases
+        maxHp += 20; 
+        hp = maxHp;       // Heal on level up
+        attack += 5;
+        score += 500;     // Bonus score for leveling up
+        
+        // Increase the requirement for the NEXT level (The Curve)
+        expToNextLevel = (int)(expToNextLevel * 1.5f); 
+    }
+}
+
+void Player::AddScore(int amount) {
+    score += amount;
 }

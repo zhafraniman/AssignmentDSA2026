@@ -29,6 +29,8 @@ private:
     int PlayerHP;
     int PlayerMaxHP;
     int PlayerAttack;
+    int currentExpReward;
+    int currentScoreReward;
  
     // Active timed potion effects
     PotionEffect playerStrengthEffect;
@@ -66,8 +68,8 @@ public:
     int& get_healing() { return PlayerHP; }
     int  max_HP()      { return PlayerMaxHP; }
  
-    void StartBattle();
-    void StartBossBattle();   // begins the final-boss encounter (DSA-driven AI)
+    void StartBattle(std::string name, int maxHp, int attack, int expReward, int scoreReward);
+    void StartBossBattle(std::string name, int maxHp, int attack, int expReward, int scoreReward);  // begins the final-boss encounter (DSA-driven AI)
     void Update(Player& player);
     void Enemy_Damage(Player& player);
     void Player_Damage(Player& player);

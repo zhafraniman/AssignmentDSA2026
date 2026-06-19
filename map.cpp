@@ -94,12 +94,14 @@ static void FillItemData(Item& item) {
 static void FillEnemyData(Enemy& enemy) {
     switch (enemy.typeID) {
         case 1:
-            enemy.name = "Green Slime";
+            enemy.name = "NULL Byte";
             enemy.maxHp = 20;
             enemy.hp = 20;
             enemy.attack = 5;
-            enemy.speed = 50.0f;
+            enemy.speed = 100.0f;
             enemy.aggroRange = 100;
+            enemy.expReward = 25;   
+            enemy.scoreReward = 50;
             enemy.hasLoot = true;
             enemy.lootDrop = {ITEM_HEALTH_POTION, "Health Potion", "Restores 20 HP", 1};
             break;
@@ -109,19 +111,23 @@ static void FillEnemyData(Enemy& enemy) {
             enemy.maxHp = 45;
             enemy.hp = 45;
             enemy.attack = 12;
-            enemy.speed = 80.0f;
+            enemy.speed = 100.0f;
             enemy.aggroRange = 150;
+            enemy.expReward = 60;   
+            enemy.scoreReward = 150;
             enemy.hasLoot = true;
             enemy.lootDrop = {ITEM_STRENGTH_POTION, "Strength Potion", "Deal +10 damage", 1};
             break;
 
         case 999: // Final Boss
-            enemy.name = "Compiler";
+            enemy.name = "THE COMPILER";
             enemy.maxHp = 150;
             enemy.hp = 150;
             enemy.attack = 25;
-            enemy.speed = 110.0f;
+            enemy.speed = 150.0f;
             enemy.aggroRange = 250;
+            enemy.expReward = 1000;   
+            enemy.scoreReward = 5000;
             enemy.hasLoot = false;
             break;
 
@@ -132,6 +138,8 @@ static void FillEnemyData(Enemy& enemy) {
             enemy.attack = 1;
             enemy.speed = 0.0f;
             enemy.aggroRange = 0;
+            enemy.expReward = 0;   
+            enemy.scoreReward = 0;
             break;
     }
 }
@@ -407,7 +415,7 @@ void GameMap::Draw() {
             default: currentSprite = NULLByteSprite; break; // Fallback just in case
         }
 
-        DrawTexture(currentSprite, drawX, drawY, isAggro ? RED : WHITE);
+        DrawTexture(currentSprite, drawX, drawY, enemies[i].isAggro ? RED : WHITE);
         // DrawRectangleLinesEx(enemies[i].bounds, 1, RED); // Debug hitbox
     }
 }
@@ -497,35 +505,39 @@ Signpost* GameMap::CheckSignpostInteraction(Rectangle playerBounds) {
 // -------------------------------------------------------------------
 void GameMap::UpdateEnemies(Rectangle playerBounds) {
     float deltaTime = GetFrameTime();
-    isAggro = false; // Reset per frame; set true if any enemy is chasing
- 
+    // Removed the global 'isAggro = false' from here
+
     for (int i = 0; i < enemyCount; i++) {
         if (enemies[i].isDefeated) continue;
- 
+
+        // Center points for player and enemy
         float pCX = playerBounds.x + playerBounds.width  / 2;
         float pCY = playerBounds.y + playerBounds.height / 2;
         float eCX = enemies[i].bounds.x + enemies[i].bounds.width  / 2;
         float eCY = enemies[i].bounds.y + enemies[i].bounds.height / 2;
- 
+
+        // Grid coordinates for pathfinding and LoS checks
+        int eGX = (int)(eCX / TILE_SIZE);
+        int eGY = (int)(eCY / TILE_SIZE);
+        int pGX = (int)(pCX / TILE_SIZE);
+        int pGY = (int)(pCY / TILE_SIZE);
+
         float dx    = pCX - eCX;
         float dy    = pCY - eCY;
         float dist  = sqrtf(dx * dx + dy * dy);
- 
-        if (dist < enemies[i].aggroRange) {
-            isAggro = true;
- 
-            int eGX = (int)(eCX / TILE_SIZE);
-            int eGY = (int)(eCY / TILE_SIZE);
-            int pGX = (int)(pCX / TILE_SIZE);
-            int pGY = (int)(pCY / TILE_SIZE);
- 
+
+        // 1. COMBINED AGGRO CHECK: Distance AND Line of Sight
+        if (dist < enemies[i].aggroRange && HasLineOfSight(eGX, eGY, pGX, pGY)) {
+            enemies[i].isAggro = true; // Set individual state to true
+
+            // Chase Player (Your existing BFS logic)
             Point2D next = GetNextPathStep(eGX, eGY, pGX, pGY);
             float tPX = next.x * TILE_SIZE + TILE_SIZE / 2.0f;
             float tPY = next.y * TILE_SIZE + TILE_SIZE / 2.0f;
             float sDX = tPX - eCX;
             float sDY = tPY - eCY;
             float sD  = sqrtf(sDX * sDX + sDY * sDY);
- 
+
             if (sD > 2.0f) {
                 float dirX = sDX / sD;
                 float dirY = sDY / sD;
@@ -537,15 +549,25 @@ void GameMap::UpdateEnemies(Rectangle playerBounds) {
                     enemies[i].bounds.y -= dirY * enemies[i].speed * deltaTime;
             }
         } else {
-            // Walk back to spawn at half speed
-            float hDX   = enemies[i].spawnX - enemies[i].bounds.x;
-            float hDY   = enemies[i].spawnY - enemies[i].bounds.y;
-            float hDist = sqrtf(hDX * hDX + hDY * hDY);
-            if (hDist > 1.0f) {
-                float dirX = hDX / hDist;
-                float dirY = hDY / hDist;
-                float retS = enemies[i].speed * 0.5f;
- 
+            enemies[i].isAggro = false; // Set individual state to false
+
+            // 2. SMART RETREAT: Use BFS to navigate back to spawn around walls!
+            int spawnGX = (int)(enemies[i].spawnX / TILE_SIZE);
+            int spawnGY = (int)(enemies[i].spawnY / TILE_SIZE);
+
+            Point2D next = GetNextPathStep(eGX, eGY, spawnGX, spawnGY);
+            float tPX = next.x * TILE_SIZE + TILE_SIZE / 2.0f;
+            float tPY = next.y * TILE_SIZE + TILE_SIZE / 2.0f;
+            
+            float sDX = tPX - eCX;
+            float sDY = tPY - eCY;
+            float sD  = sqrtf(sDX * sDX + sDY * sDY);
+
+            if (sD > 1.0f) {
+                float dirX = sDX / sD;
+                float dirY = sDY / sD;
+                float retS = enemies[i].speed * 0.85f; // Walk back slower
+
                 enemies[i].bounds.x += dirX * retS * deltaTime;
                 if (CheckCollision(enemies[i].bounds))
                     enemies[i].bounds.x -= dirX * retS * deltaTime;
@@ -636,6 +658,27 @@ Point2D GameMap::GetNextPathStep(int startX, int startY, int targetX, int target
         step = parent[step.y][step.x];
     }
     return step;
+}
+
+bool GameMap::HasLineOfSight(int x0, int y0, int x1, int y1) {
+    int dx = abs(x1 - x0);
+    int dy = abs(y1 - y0);
+    int sx = (x0 < x1) ? 1 : -1;
+    int sy = (y0 < y1) ? 1 : -1;
+    int err = dx - dy;
+
+    while (true) {
+        // If we hit a solid wall tile, vision is blocked!
+        if (IsSolid(x0, y0)) return false; 
+        
+        // If the line successfully reaches the target tile, vision is clear!
+        if (x0 == x1 && y0 == y1) return true;
+
+        // Calculate slope error and shift the invisible line to the next tile
+        int e2 = 2 * err;
+        if (e2 > -dy) { err -= dy; x0 += sx; }
+        if (e2 < dx) { err += dx; y0 += sy; }
+    }
 }
 
 void GameMap::ResetProgress() {

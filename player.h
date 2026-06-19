@@ -14,9 +14,13 @@ private:
 
     // PLAYERS DATA
     std::string name;
-    int level;
+    int level = 1;
+    int currentExp = 0;
+    int expToNextLevel = 100;
+    int score = 0;
     int hp;
     int maxHp;
+    int attack = 10;
     Inventory inventory;
 
 public:
@@ -29,6 +33,9 @@ public:
     void Teleport(float newX, float newY);
     void Reset(float startX, float startY);
 
+    // Leveling System
+    void GainExperience(int amount);
+
     // Getters
     std::string GetName() const { return name; }
     int GetLevel() const { return level; }
@@ -37,6 +44,7 @@ public:
 
     // Setters
     void SetName(const std::string& newName);
+    void AddScore(int amount);
 
     // Inventory methods
     bool AddItem(Item newItem);

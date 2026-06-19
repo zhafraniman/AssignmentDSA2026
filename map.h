@@ -58,9 +58,12 @@ struct Enemy {
     int attack;
     float speed;
     int aggroRange;
+    bool isAggro;
     bool isDefeated;
     Item lootDrop;
     bool hasLoot;
+    int expReward;
+    int scoreReward;
 
     float spawnX;
     float spawnY;
@@ -144,6 +147,7 @@ public:
     Enemy*  CheckEnemyCollision(Rectangle playerBounds);
     void    MarkEnemyDefeated(Enemy* enemy);
     Point2D GetNextPathStep(int startX, int startY, int targetX, int targetY);
+    bool HasLineOfSight(int x0, int y0, int x1, int y1);
     void    ResetDefeatedEnemies();
 
     Item GetEnemyLoot(Enemy* enemy);

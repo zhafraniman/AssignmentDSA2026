@@ -144,18 +144,27 @@ void Game::Update() {
                 worldMap.CheckEnemyCollision(myPlayer.GetBounds());
 
             if (touchedEnemy != nullptr) {
-
                 currentEnemy = touchedEnemy;
 
-                // typeID 999 is the final boss — it fights with the
-                // Stack/Tree/Queue-driven AI instead of the basic enemy.
-                if (touchedEnemy->typeID == 999)
-                    battle.StartBossBattle();
-                else
-                    battle.StartBattle();
+                if (touchedEnemy->typeID == 999) {
+                    battle.StartBossBattle(
+                        touchedEnemy->name, 
+                        touchedEnemy->maxHp, 
+                        touchedEnemy->attack, 
+                        touchedEnemy->expReward, 
+                        touchedEnemy->scoreReward
+                    );
+                } else {
+                    battle.StartBattle(
+                        touchedEnemy->name, 
+                        touchedEnemy->maxHp, 
+                        touchedEnemy->attack, 
+                        touchedEnemy->expReward, 
+                        touchedEnemy->scoreReward
+                    );
+                }
 
                 currentState = STATE_BATTLE;
-
                 break;
             }
 
@@ -326,7 +335,7 @@ void Game::Update() {
             // --------------------------------------------------------
             if (IsKeyPressed(KEY_B)) {
 
-                battle.StartBossBattle();
+                battle.StartBossBattle("THE COMPILER", 150, 25, 0, 0);
 
                 currentEnemy = nullptr;
 
@@ -338,7 +347,7 @@ void Game::Update() {
             // --------------------------------------------------------
             if (IsKeyPressed(KEY_N)) {
 
-                battle.StartBattle();
+                battle.StartBattle("Dummy", 20, 1, 0, 0);
 
                 currentEnemy = nullptr;
 
@@ -424,7 +433,7 @@ void Game::Update() {
 
                         currentEnemy = nullptr;
 
-                        battle.StartBattle();
+                        battle.StartBattle("Reset", 1, 1, 0, 0);
 
                         currentState = STATE_OVERWORLD;
                     }
@@ -476,7 +485,7 @@ void Game::Update() {
                             }
                         }
 
-                        battle.StartBattle();
+                        battle.StartBattle("Reset", 1, 1, 0, 0);
 
                         if (!lootMsg.empty()) {
 

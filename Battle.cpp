@@ -29,7 +29,9 @@ BattleSystem::BattleSystem() {
  
     std::srand(std::time(nullptr));
  
-    StartBattle();
+    currentExpReward = 0;
+    currentScoreReward = 0;
+    StartBattle("Unknown Glitch", 50, 6, 0, 0);
 }
  
 // ------------------------------------------------------------
@@ -42,7 +44,9 @@ void BattleSystem::Player_Damage(Player& player) {
     if (enemyHp <= 0) {
         enemyHp = 0;
         currentState  = PLAYER_WIN;
-        battleMessage = "You defeated the enemy!";
+        player.GainExperience(currentExpReward);
+        player.AddScore(currentScoreReward);
+        battleMessage = "You defeated the enemy! Gained" + std::to_string(currentExpReward) + " EXP!";
         return;
     }
  
@@ -244,7 +248,7 @@ void BattleSystem::Update(Player& player) {
 // ------------------------------------------------------------
 // START / RESET
 // ------------------------------------------------------------
-void BattleSystem::StartBattle() {
+void BattleSystem::StartBattle(std::string name, int maxHp, int attack, int expReward, int scoreReward) {
     currentState      = PLAYER_TURN;
     playerDefending   = false;
     selectedOption    = 0;
@@ -252,10 +256,16 @@ void BattleSystem::StartBattle() {
     itemSubMenuOption = 0;
     isBossBattle      = false;   // ordinary enemy
 
-    enemyMaxHp    = 50;
-    enemyAttack   = 6;
-    enemyHp       = enemyMaxHp;
-    battleMessage = "A wild enemy appeared!";
+    enemyname     = name;
+    enemyMaxHp    = maxHp;
+    enemyHp       = maxHp;
+    enemyAttack   = attack;
+    
+    currentExpReward = expReward;
+    currentScoreReward = scoreReward;
+    
+    // Personalize the entry message
+    battleMessage = "A wild " + enemyname + " appeared!";
  
     playerStrengthEffect = PotionEffect(EFFECT_NONE, 0, 0);
     playerDefenseEffect  = PotionEffect(EFFECT_NONE, 0, 0);
@@ -266,19 +276,21 @@ void BattleSystem::StartBattle() {
 // uses a hand-built Queue (attack plan), Stack (rage charges) and
 // binary decision Tree (move selection) to fight back.
 // ------------------------------------------------------------
-void BattleSystem::StartBossBattle() {
+void BattleSystem::StartBossBattle(std::string name, int maxHp, int attack, int expReward, int scoreReward) {
     currentState      = PLAYER_TURN;
     playerDefending   = false;
     selectedOption    = 0;
     itemMenuOpen      = false;
     itemSubMenuOption = 0;
     isBossBattle      = true;
-
-    enemyname     = "The Compiler";
-    enemyMaxHp    = 150;
-    enemyAttack   = 0;            // damage now comes from the Boss AI, not this
-    enemyHp       = enemyMaxHp;
-    battleMessage = "THE COMPILER awakens. It will attack with Stacks, Trees and Queues!";
+    enemyname     = name;
+    enemyMaxHp    = maxHp;
+    enemyHp       = maxHp;
+    enemyAttack   = attack; // Boss damage mostly comes from its AI tree, but good to store
+    
+    currentExpReward = expReward;
+    currentScoreReward = scoreReward;
+    battleMessage = enemyname + "awakens. It will attack with Stacks, Trees and Queues!";
 
     boss.Reset();                 // empty the attack queue + rage stack
 
@@ -339,9 +351,10 @@ void BattleSystem::Draw(const Player& player) {
     // --- Enemy panel ---
     DrawRectangleLines(500, 80, 220, 120, WHITE);
     if (isBossBattle) {
-        DrawText(enemyname.c_str(), 512, 90, 24, EnemyColor);
+        DrawText(enemyname.c_str(), 512, 90, 24, EnemyColor); // Or whatever custom color you had
     } else {
-        DrawText("ENEMY", 565, 90, 28, WHITE);
+        // We now use enemyname instead of the hardcoded "ENEMY" text
+        DrawText(enemyname.c_str(), 512, 90, 24, WHITE);
     }
     DrawText(TextFormat("HP: %d / %d", enemyHp, enemyMaxHp), 540, 140, 24, WHITE);
 
