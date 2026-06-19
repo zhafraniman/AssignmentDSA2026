@@ -41,6 +41,9 @@ public:
     int GetLevel() const { return level; }
     int GetHP() const { return hp; }
     int GetMaxHP() const { return maxHp; }
+    int GetCurrentExp() const { return currentExp; }
+    int GetExpToNextLevel() const { return expToNextLevel; }
+    int GetScore() const { return score; }
 
     // Setters
     void SetName(const std::string& newName);

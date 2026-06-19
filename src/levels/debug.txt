@@ -24,11 +24,15 @@ PORTAL 12 1 src/levels/spawn.txt 12 9 UNLOCKED 0
 
 
 
-CHEST 4 10 301 1 Health_Potion
-CHEST 7 10 302 2 Strength_Potion
-CHEST 10 10 303 3 Defense_Potion
-CHEST 13 10 304 4 Iron_Key
-CHEST 16 10 305 5 Prison_Key
+CHEST 4 10 320 1 Health_Potion
+CHEST 7 10 321 2 Strength_Potion
+CHEST 10 10 322 3 Defense_Potion
+CHEST 13 10 323 5 Prison_Key
+CHEST 4 7 325 6 Office_Key
+CHEST 7 7 326 7 Iron_Key
+CHEST 10 7 327 8 Master_Key
+CHEST 13 7 324 505 Debug_Key
+
 CHEST 22 13 306 1 Health_Potion
 
 GATE 19 13 410 4

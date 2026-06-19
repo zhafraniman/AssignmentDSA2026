@@ -74,7 +74,9 @@ void Renderer::DrawMenu(const Player& player, int score) {
     const int panelX = SCREEN_WIDTH - 260;
     const int panelY = 50;
     const int panelW = 210;
-    const int panelH = 340;
+    
+    // 1. INCREASE PANEL HEIGHT (was 340, now 380 to make room for EXP)
+    const int panelH = 380; 
  
     DrawRectangle(panelX, panelY, panelW, panelH, MenuPanelColor);
     DrawRectangleLines(panelX, panelY, panelW, panelH, RAYWHITE);
@@ -82,21 +84,25 @@ void Renderer::DrawMenu(const Player& player, int score) {
     // Stats
     std::string nameText  = "NAME: " + player.GetName();
     std::string levelText = "LVL:  " + std::to_string(player.GetLevel());
+    std::string expText   = "EXP:  " + std::to_string(player.GetCurrentExp()) + 
+                            " / " + std::to_string(player.GetExpToNextLevel());     
     std::string hpText    = "HP:   " + std::to_string(player.GetHP()) +
                             " / "    + std::to_string(player.GetMaxHP());
-
-    std::string scoreText = "SCORE: " + std::to_string(score);
+    std::string scoreText = "SCORE: " + std::to_string(player.GetScore());
  
     DrawText(nameText.c_str(),  panelX + 15, panelY + 20,  18, RAYWHITE);
     DrawText(levelText.c_str(), panelX + 15, panelY + 50,  18, RAYWHITE);
-    DrawText(hpText.c_str(),    panelX + 15, panelY + 80,  18, GREEN);
-    DrawText(scoreText.c_str(), panelX + 15, panelY + 110, 18, GOLD);
+    
+    DrawText(expText.c_str(),   panelX + 15, panelY + 80,  18, SKYBLUE);
+    
+    DrawText(hpText.c_str(),    panelX + 15, panelY + 110,  18, GREEN);
+    DrawText(scoreText.c_str(), panelX + 15, panelY + 140, 18, GOLD);
 
     // Inventory section
-    DrawText("INVENTORY:", panelX + 15, panelY + 145, 18, GOLD);
-    DrawLine(panelX + 15, panelY + 167, panelX + panelW - 15, panelY + 167, GOLD);
+    DrawText("INVENTORY:", panelX + 15, panelY + 175, 18, GOLD);
+    DrawLine(panelX + 15, panelY + 197, panelX + panelW - 15, panelY + 197, GOLD);
  
-    int drawY = panelY + 177;
+    int drawY = panelY + 207; // Starting height for items
     int count = player.GetInventoryCount();
  
     if (count == 0) {
@@ -106,13 +112,11 @@ void Renderer::DrawMenu(const Player& player, int score) {
  
     for (int i = 0; i < count; i++) {
         Item item = player.GetInventoryItem(i);
-        if (item.id == 0) continue; // Skip empty slots
+        if (item.id == 0) continue; 
  
-        // Show name and quantity on the same line
         std::string line = item.name + "  x" + std::to_string(item.quantity);
         DrawText(line.c_str(), panelX + 15, drawY, 14, RAYWHITE);
  
-        // Show item description in a smaller, dimmer font on the next line
         if (!item.description.empty()) {
             DrawText(item.description.c_str(), panelX + 20, drawY + 16, 11, LIGHTGRAY);
             drawY += 38;
