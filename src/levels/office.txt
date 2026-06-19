@@ -1,0 +1,43 @@
+GRID
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 1 1 1
+1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1
+1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1
+1 0 0 1 1 0 1 1 1 1 0 0 1 0 0 0 1 0 0 1 0 0 0 0 1
+1 0 0 1 0 0 0 0 0 1 0 0 1 1 1 1 1 0 0 1 1 1 1 1 1
+1 0 0 1 0 0 0 0 0 1 0 0 1 0 0 0 1 0 0 1 0 0 0 0 1
+1 0 0 1 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1
+1 0 0 1 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1
+0 0 0 1 1 1 1 1 1 1 0 0 1 1 1 1 1 0 0 1 1 1 1 1 1
+1 0 0 1 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1
+1 0 0 1 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1
+1 0 0 1 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1
+1 0 0 1 0 0 0 0 0 1 0 0 1 0 0 0 1 0 0 1 0 0 0 0 1
+1 0 0 1 0 0 0 0 0 1 0 0 1 1 1 1 1 0 0 1 1 1 1 1 1
+1 0 0 1 1 1 1 0 1 1 0 0 1 0 0 0 1 0 0 1 0 0 0 0 1
+1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1
+1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+
+PORTAL 0 8 src/levels/lobby.txt 23 8 UNLOCKED 0
+PORTAL 21 0 src/levels/maze.txt 23 16 UNLOCKED 0
+
+CHEST 8 4 108 3 Defence_Potion
+CHEST 15 11 109 2 Strength_Potion
+CHEST 8 6 110 3 Defence_Potion
+
+ENEMY 5 10 305 2
+ENEMY 11 8 306 2
+ENEMY 18 14 307 1
+ENEMY 2 3 308 1
+
+SIGNPOST 15 12 3
+Written Note From Guard: "There is something scary inside that room. . ."
+"All of our forces have been wiped off by this singular monster"
+"I don't think I can hold much longer. . ."
+
+SIGNPOST 22 5 2
+Crumpled Note: "That monster. . . It can charge its attack with the power of queues."
+"Even if we prepared for the attack, it still managed to penetrate our defences."
+"I told our guys to find a way to deal with that ability."
+
+

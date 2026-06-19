@@ -22,7 +22,7 @@ GameMap::GameMap() {
     signSprite        = LoadTexture("src/sprite/sign.png");
 
     NULLByteSprite = LoadTexture("src/sprite/nullbyte.png");
-    LostArraySprite = LoadTexture("src/sprite/lostarray.png");
+    LostArraySprite = LoadTexture("src/sprite/lost_array.png");
     CompilerSprite = LoadTexture("src/sprite/compiler.png");
  
     portalCount   = 0;
@@ -73,11 +73,17 @@ static void FillItemData(Item& item) {
         case ITEM_DEFENSE_POTION:
             item.description = "Gain +50 max HP";
             break;
+        case ITEM_PRISON_KEY:
+            item.description = "Opens our cell";
+            break;
+        case ITEM_OFFICE_KEY:
+            item.description = "Unlocks the office door";
+            break;
         case ITEM_IRON_KEY:
-            item.description = "Opens locked doors";
+            item.description = "Unlocks the locked door in maze";
             break;
         case ITEM_MASTER_KEY:
-            item.description = "Debug master key - opens the test room";
+            item.description = "Unlocks that dangerous door";
             break;
         default:
             item.description = "A mysterious item";

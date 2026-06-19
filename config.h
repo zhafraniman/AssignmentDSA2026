@@ -26,9 +26,11 @@ struct ScoreEntry {
 #define ITEM_HEALTH_POTION 1
 #define ITEM_STRENGTH_POTION 2
 #define ITEM_DEFENSE_POTION 3
-#define ITEM_IRON_KEY 4
 #define ITEM_PRISON_KEY 5
-#define ITEM_MASTER_KEY 15
+#define ITEM_OFFICE_KEY 6
+#define ITEM_IRON_KEY 7
+#define ITEM_MASTER_KEY 8
+#define ITEM_DEBUG_KEY 505
 
 // Loot table for enemies and chests
 #define STRENGTH_POTION_DAMAGE_BONUS 10

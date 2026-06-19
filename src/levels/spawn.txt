@@ -20,6 +20,10 @@ GRID
 
 SPAWN 7 15
 
+PORTAL 12 17 src/levels/lobby.txt 12 1 UNLOCKED 0
+PORTAL 12 0 src/levels/arena.txt 12 16 LOCKED 15
+PORTAL 1 8 src/levels/debug.txt 12 16 LOCKED 505
+
 GATE 7 11 401 5
 
 GATE 2 11 401 0
@@ -30,19 +34,16 @@ GATE 8 6 401 0
 GATE 17 6 401 0
 GATE 22 6 401 0
 
-PORTAL 12 17 src/levels/lobby.txt 12 1 UNLOCKED 0
-PORTAL 12 0 src/levels/arena.txt 12 16 LOCKED 4
-PORTAL 4 8 src/levels/debug.txt 12 16 LOCKED 15
 
 CHEST 9 16 101 5 Prison_Key
-CHEST 15 5 102 1 Health_Potion
-CHEST 6 8 103 15 Master_Key
+CHEST 23 8 102 1 Health_Potion
+CHEST 6 8 103 505 Debug_Key
 
 SIGNPOST 12 2 3
 This Door Is Locked. Keep Away From This Room -Guard.
 Something must've happened here. I should investigate.
 I need to find some sort of key to open it.
 
-SIGNPOST 8 8 2
-DEBUG ROOM: open the chest here to get the Master Key.
+SIGNPOST 3 8 2
+DEBUG ROOM: Open the chest here to get the Debug Key.
 Then step on the portal to the left to enter the test room.
