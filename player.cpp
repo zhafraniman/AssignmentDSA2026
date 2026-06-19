@@ -37,7 +37,7 @@ void Player::Update(GameMap& map, Vector2 inputDirection) {
     if (map.CheckCollision(GetBounds()))
         position.y -= moveAmount.y * speed * deltaTime;
 
-    // Screen Boundary (Preventrs Off-Screen Movement)
+    // Screen Boundary (Prevents Off-Screen Movement)
     if (position.x < 0.0f) position.x = 0.0f;
     if (position.x > SCREEN_WIDTH - sprite.width) position.x = SCREEN_WIDTH - sprite.width;
 
@@ -86,8 +86,8 @@ bool Player::UseItem(int itemID) {
 // BUG FIX: These two were declared in player.h but never defined,
 // causing a linker error whenever anything tried to call them
 // (e.g. BattleSystem::Draw querying item quantities).
-bool Player::HasIronKey() const {
-    return inventory.HasIronKey();
+bool Player::HasKey() const {
+    return inventory.HasKey();
 }
  
 int Player::GetItemQuantity(int itemID) const {
@@ -103,14 +103,14 @@ void Player::Reset(float startX, float startY) {
     level = 1;
     maxHp = 25;
     hp    = 25;
-    inventory.Clear(); // Empties your linked list!
+    inventory.Clear(); // Empties linked list
 }
 
 void Player::GainExperience(int amount) {
-    // 1. Add the raw experience and score
+    // Adding EXP and Score
     currentExp += amount;
     
-    // 2. Process Level Ups safely using a loop
+    // Processes Level Ups
     while (currentExp >= expToNextLevel) {
         // Deduct the required EXP, but keep the remainder!
         currentExp -= expToNextLevel; 
@@ -124,7 +124,7 @@ void Player::GainExperience(int amount) {
         attack += 5;
         score += 500;     // Bonus score for leveling up
         
-        // Increase the requirement for the NEXT level (The Curve)
+        // Increase the requirement for next level (The Curve)
         expToNextLevel = (int)(expToNextLevel * 1.5f); 
     }
 }

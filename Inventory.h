@@ -45,8 +45,8 @@ public:
     bool IncreaseQuantity(int itemID, int amount);
     bool DecreaseQuantity(int itemID, int amount);
     
-    // Check for iron key
-    bool HasIronKey() const;
+    // Check for key
+    bool HasKey() const;
     int GetItemQuantity(int itemID) const;
 };
 

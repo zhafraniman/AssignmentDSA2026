@@ -58,7 +58,6 @@ void Renderer::DrawOverworld(Player& player, GameMap& map) {
 }
  
 void Renderer::DrawBattle() {
-    // Placeholder — real battle rendering is done by BattleSystem::Draw()
     DrawRectangle(600, 100, 64, 64, EnemyColor);
     DrawText("BATTLE ENGAGED!", 200, 250, 20, RAYWHITE);
 }
@@ -74,8 +73,6 @@ void Renderer::DrawMenu(const Player& player, int score) {
     const int panelX = SCREEN_WIDTH - 260;
     const int panelY = 50;
     const int panelW = 210;
-    
-    // 1. INCREASE PANEL HEIGHT (was 340, now 380 to make room for EXP)
     const int panelH = 380; 
  
     DrawRectangle(panelX, panelY, panelW, panelH, MenuPanelColor);
@@ -102,7 +99,7 @@ void Renderer::DrawMenu(const Player& player, int score) {
     DrawText("INVENTORY:", panelX + 15, panelY + 175, 18, GOLD);
     DrawLine(panelX + 15, panelY + 197, panelX + panelW - 15, panelY + 197, GOLD);
  
-    int drawY = panelY + 207; // Starting height for items
+    int drawY = panelY + 207;
     int count = player.GetInventoryCount();
  
     if (count == 0) {
@@ -132,7 +129,7 @@ void Renderer::DrawMenu(const Player& player, int score) {
 void Renderer::DrawMainMenu(int selection) {
     ClearBackground(BLACK);
     
-    // Calculate perfect centering for the X axis
+    // Calculating perfect centering for the X axis
     int titleX = (SCREEN_WIDTH - titleSprite.width) / 2;
     int titleY = 80; // Distance from the top of the screen
     DrawTexture(titleSprite, titleX, titleY, WHITE);
@@ -143,11 +140,11 @@ void Renderer::DrawMainMenu(int selection) {
     Color startColor = (selection == 0) ? GREEN : GRAY;
     Color leadColor  = (selection == 1) ? GREEN : GRAY;
 
-    // 3. Dynamically calculate the centered X coordinates based on real-time length
+    // Dynamic centered X coordinates based on real-time length
     int startX = (SCREEN_WIDTH - MeasureText(startText.c_str(), 30)) / 2;
     int leadX  = (SCREEN_WIDTH - MeasureText(leadText.c_str(), 30)) / 2;
 
-    // 4. Draw the text options using our perfectly calculated centered positions!
+    // Draw the text options using calculated centered positions
     DrawText(startText.c_str(), startX, 300, 30, startColor);
     DrawText(leadText.c_str(), leadX, 360, 30, leadColor);
 }
@@ -167,7 +164,7 @@ void Renderer::DrawNameInput(const std::string& currentName) {
 void Renderer::DrawLeaderboard(ScoreEntry* leaderboard, int count) {
     ClearBackground(BLACK);
     
-    // Center the main screen header title dynamically
+    // Center the header title dynamically
     std::string titleText = "LEADERBOARD";
     int titleX = (SCREEN_WIDTH - MeasureText(titleText.c_str(), 30)) / 2;
     DrawText(titleText.c_str(), titleX, 50, 30, GREEN);
@@ -215,7 +212,7 @@ void Renderer::DrawLeaderboard(ScoreEntry* leaderboard, int count) {
         }
     }
     
-    // 5. Center the navigation tip text at the bottom dynamically
+    // Center the navigation tip text at the bottom dynamically
     std::string footerText = "Press ESC to return";
     int footerX = (SCREEN_WIDTH - MeasureText(footerText.c_str(), 20)) / 2;
     DrawText(footerText.c_str(), footerX, 520, 20, GRAY);
@@ -224,22 +221,22 @@ void Renderer::DrawLeaderboard(ScoreEntry* leaderboard, int count) {
 void Renderer::DrawVictoryScreen(int score, float playTimer) {
     ClearBackground(BLACK);
 
-    // 1. Draw the Title
+    // Title
     const char* title = "CONGRATULATIONS! YOU WON!";
     int titleX = (SCREEN_WIDTH - MeasureText(title, 40)) / 2;
     DrawText(title, titleX, 150, 40, GOLD);
 
-    // 2. Draw the Final Score
+    // Final Score
     std::string scoreText = "FINAL SCORE: " + std::to_string(score);
     int scoreX = (SCREEN_WIDTH - MeasureText(scoreText.c_str(), 30)) / 2;
     DrawText(scoreText.c_str(), scoreX, 250, 30, RAYWHITE);
 
-    // 3. Draw the Time Taken
+    // Time Taken
     std::string timeText = "TIME TAKEN: " + std::to_string((int)playTimer) + " seconds";
     int timeX = (SCREEN_WIDTH - MeasureText(timeText.c_str(), 30)) / 2;
     DrawText(timeText.c_str(), timeX, 300, 30, RAYWHITE);
 
-    // 4. Draw the Prompt to leave
+    // Prompt to leave
     const char* prompt = "Press ENTER to return to Main Menu";
     int promptX = (SCREEN_WIDTH - MeasureText(prompt, 20)) / 2;
     DrawText(prompt, promptX, 450, 20, GRAY);

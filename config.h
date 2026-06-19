@@ -36,7 +36,6 @@ struct ScoreEntry {
 #define STRENGTH_POTION_DAMAGE_BONUS 10
 #define STRENGTH_POTION_DURATION 2  // Turns
 #define DEFENSE_POTION_HP_BONUS 50
-// #define IRON_KEY_ID 4
 
 enum GameState {
     STATE_MAIN_MENU,

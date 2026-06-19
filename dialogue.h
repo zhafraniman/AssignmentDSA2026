@@ -14,7 +14,7 @@ private:
     int backIndex;
     int messageCount;
 
-    // NEW: Typewriter Effect Variables
+    // Typewriter Effect Variables
     float textTimer; 
     int charCount;   
 
@@ -25,7 +25,7 @@ public:
     void Enqueue(std::string text);
     void Dequeue();
     
-    // NEW: Engine functions for the Undertale feel
+    // Functions for Real-Time Typing animation
     void Update(); 
     bool IsTextFinished(); 
     void SkipTyping();     

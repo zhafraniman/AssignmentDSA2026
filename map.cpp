@@ -1,5 +1,4 @@
 #include "map.h"
-#include <cstddef>
 #include <fstream>
 #include <iostream>
 #include <math.h>
@@ -131,7 +130,7 @@ static void FillEnemyData(Enemy& enemy) {
             enemy.hasLoot = false;
             break;
 
-        default: // Fallback if you type a wrong ID in the text file
+        default: // Fallback if theres wrong ID in the text file
             enemy.name = "Unknown Glitch";
             enemy.maxHp = 1;
             enemy.hp = 1;
@@ -317,7 +316,7 @@ bool GameMap::LoadMap(const std::string& filename) {
             int gridX, gridY;
             file >> gridX >> gridY;
             
-            // The engine automatically converts your easy grid numbers into ugly pixel numbers
+            // Converts tile coordinate into pixel numbers
             defaultSpawnX = (float)(gridX * TILE_SIZE);
             defaultSpawnY = (float)(gridY * TILE_SIZE);
         }
@@ -441,7 +440,7 @@ bool GameMap::CheckCollision(Rectangle rect) {
 
     // Gate Collision
     for (int i = 0; i < gateCount; i++) {
-        // If the gate is locked AND the player's rectangle hits it, block them!
+        // If the gate is locked AND the player's rectangle hits it, block them
         if (gates[i].isLocked && CheckCollisionRecs(rect, gates[i].bounds)) {
             return true; 
         }
@@ -505,7 +504,6 @@ Signpost* GameMap::CheckSignpostInteraction(Rectangle playerBounds) {
 // -------------------------------------------------------------------
 void GameMap::UpdateEnemies(Rectangle playerBounds) {
     float deltaTime = GetFrameTime();
-    // Removed the global 'isAggro = false' from here
 
     for (int i = 0; i < enemyCount; i++) {
         if (enemies[i].isDefeated) continue;
@@ -516,7 +514,7 @@ void GameMap::UpdateEnemies(Rectangle playerBounds) {
         float eCX = enemies[i].bounds.x + enemies[i].bounds.width  / 2;
         float eCY = enemies[i].bounds.y + enemies[i].bounds.height / 2;
 
-        // Grid coordinates for pathfinding and LoS checks
+        // Grid coordinates for pathfinding and Line of Sight checks
         int eGX = (int)(eCX / TILE_SIZE);
         int eGY = (int)(eCY / TILE_SIZE);
         int pGX = (int)(pCX / TILE_SIZE);
@@ -526,11 +524,11 @@ void GameMap::UpdateEnemies(Rectangle playerBounds) {
         float dy    = pCY - eCY;
         float dist  = sqrtf(dx * dx + dy * dy);
 
-        // 1. COMBINED AGGRO CHECK: Distance AND Line of Sight
+        // AGGRO CHECK: Distance & Line of Sight
         if (dist < enemies[i].aggroRange && HasLineOfSight(eGX, eGY, pGX, pGY)) {
-            enemies[i].isAggro = true; // Set individual state to true
+            enemies[i].isAggro = true;
 
-            // Chase Player (Your existing BFS logic)
+            // Chase Player
             Point2D next = GetNextPathStep(eGX, eGY, pGX, pGY);
             float tPX = next.x * TILE_SIZE + TILE_SIZE / 2.0f;
             float tPY = next.y * TILE_SIZE + TILE_SIZE / 2.0f;
@@ -555,8 +553,7 @@ void GameMap::UpdateEnemies(Rectangle playerBounds) {
             int spawnGY = (int)(enemies[i].spawnY / TILE_SIZE);
 
             // ==========================================
-            // NEW: Are we already inside our home tile?
-            // ==========================================
+            // Check if already at spawn tile
             if (eGX == spawnGX && eGY == spawnGY) {
                 // We are! Just micro-adjust to the exact spawn pixel.
                 // Notice we use bounds.x/y here instead of the center (eCX/eCY)
@@ -575,8 +572,7 @@ void GameMap::UpdateEnemies(Rectangle playerBounds) {
                 }
             } 
             // ==========================================
-            // We are far from home. Use BFS to pathfind!
-            // ==========================================
+            // If not then use BFS to path back to spawn tile
             else {
                 Point2D next = GetNextPathStep(eGX, eGY, spawnGX, spawnGY);
                 
@@ -687,6 +683,9 @@ Point2D GameMap::GetNextPathStep(int startX, int startY, int targetX, int target
     return step;
 }
 
+// -------------------------------------------------------------------
+// LINE OF SIGHT
+// -------------------------------------------------------------------
 bool GameMap::HasLineOfSight(int x0, int y0, int x1, int y1) {
     int dx = abs(x1 - x0);
     int dy = abs(y1 - y0);
@@ -695,10 +694,10 @@ bool GameMap::HasLineOfSight(int x0, int y0, int x1, int y1) {
     int err = dx - dy;
 
     while (true) {
-        // If we hit a solid wall tile, vision is blocked!
+        // If hit a solid wall tile, vision is blocked
         if (IsSolid(x0, y0)) return false; 
         
-        // If the line successfully reaches the target tile, vision is clear!
+        // If line successfully reaches the target tile, vision is clear
         if (x0 == x1 && y0 == y1) return true;
 
         // Calculate slope error and shift the invisible line to the next tile

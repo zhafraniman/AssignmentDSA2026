@@ -170,7 +170,7 @@ bool Inventory::UseItem(int itemID) {
     return DecreaseQuantity(itemID, 1);
 }
 
-bool Inventory::HasIronKey() const {
+bool Inventory::HasKey() const {
     return FindItem(ITEM_IRON_KEY);
 }
 

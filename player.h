@@ -57,7 +57,7 @@ public:
     bool UseItem(int itemID);
     
     // Item checks
-    bool HasIronKey() const;
+    bool HasKey() const;
     int GetItemQuantity(int itemID) const;
 };
 

@@ -19,7 +19,7 @@ void DialogueBox::Dequeue() {
         frontIndex = (frontIndex + 1) % MAX_MESSAGES;
         messageCount--;
         
-        // Reset typewriter for the NEXT sentence
+        // Reset typewriter for the next sentence
         textTimer = 0.0f;
         charCount = 0;
     }
@@ -32,7 +32,7 @@ void DialogueBox::Enqueue(std::string text) {
         // Put the text in the next available slot
         queue[backIndex] = text;
         
-        // Move the back pointer forward, wrapping around if it hits the end!
+        // Move the back pointer forward, wrapping around if it hits the end
         backIndex = (backIndex + 1) % MAX_MESSAGES; 
         
         messageCount++;
@@ -73,7 +73,6 @@ void DialogueBox::SkipTyping() {
 void DialogueBox::Draw() {
     if (!IsActive()) return; 
 
-    // Undertale's layout: Wide, bottom of screen, lots of padding
     float boxWidth = SCREEN_WIDTH - 80;
     float boxHeight = 150;
     float boxX = 40;
@@ -81,20 +80,20 @@ void DialogueBox::Draw() {
 
     Rectangle boxRec = { boxX, boxY, boxWidth, boxHeight };
     
-    // 1. Draw the Solid Black Background
+    // Solid Black Background
     DrawRectangleRec(boxRec, BLACK);
     
-    // 2. Draw the Thick White Border (5 pixels thick)
+    // Thick White Border
     DrawRectangleLinesEx(boxRec, 5, WHITE);
 
-    // 3. String Manipulation: Create a temporary string containing ONLY the revealed letters
-    // and slap the classic Undertale asterisk at the front of it.
+    // String Manipulation: Create a temporary string containing only the revealed letters
+    // and slap the asterisk at the front of it.
     std::string currentText = "* " + queue[frontIndex].substr(0, charCount);
     
     // Draw the text
     DrawText(currentText.c_str(), boxX + 30, boxY + 30, 20, WHITE);
     
-    // 4. Only show the "Press SPACE" prompt if the text has finished typing!
+    // Only show the "Press SPACE" prompt if the text has finished typing
     if (IsTextFinished()) {
         DrawText("Press SPACE", boxX + boxWidth - 150, boxY + boxHeight - 30, 15, GRAY);
     }
