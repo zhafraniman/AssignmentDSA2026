@@ -354,6 +354,15 @@ void Game::Update() {
                 currentState = STATE_BATTLE;
             }
 
+            // --------------------------------------------------------
+            // DEBUG VICTORY SCREEN(press V for a insta win)
+            // --------------------------------------------------------
+            if (IsKeyPressed(KEY_V)) {
+                fileScore += 9999; // Fake Score
+                
+                currentState = STATE_VICTORY;
+            }
+
             break;
         }
 
@@ -371,7 +380,7 @@ void Game::Update() {
                     if (!dialogueBox.IsActive()) {
                         // Check if we beat the game
                         if (gameBeat) {
-                            currentState = STATE_MAIN_MENU;
+                            currentState = STATE_VICTORY;
                             gameBeat = false; // Reset for the next playthrough
                         } else {
                             currentState = STATE_OVERWORLD;
@@ -507,6 +516,15 @@ void Game::Update() {
             }
 
             break;
+
+        // ============================================================
+        case STATE_VICTORY: {
+            // Wait for the player to press a key to exit
+            if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE) || IsKeyPressed(KEY_ESCAPE)) {
+                currentState = STATE_MAIN_MENU;
+            }
+            break;
+        }
         }
     }
 }
@@ -521,6 +539,10 @@ void Game::Draw() {
 
         battle.Draw(myPlayer);
 
+    } else if (currentState == STATE_VICTORY) {
+        // Draw our new screen, passing in the final score and the timer!
+        gameRenderer.DrawVictoryScreen(fileScore, playTimer);
+        
     } else {
 
         gameRenderer.DrawFrame(

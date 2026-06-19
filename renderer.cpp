@@ -39,6 +39,8 @@ void Renderer::DrawFrame(GameState state, Player& player, GameMap& map, Dialogue
         case STATE_BATTLE:
             DrawBattle();
             break;
+        case STATE_VICTORY:
+            break;
     }
 }
  
@@ -51,7 +53,7 @@ void Renderer::DrawOverworld(Player& player, GameMap& map) {
     map.Draw();
     player.Draw();
  
-    DrawText("WASD: move  |  E: Interact  |  R: Sign  |  M: Menu  |  B: Debug battle",
+    DrawText("WASD: Move | E: Interact | R: Sign | M: Menu | N/B: Normal/Boss Battle (Debug) | V: Victory Menu (Debug) ",
              10, 10, 13, RAYWHITE);
 }
  
@@ -213,4 +215,28 @@ void Renderer::DrawLeaderboard(ScoreEntry* leaderboard, int count) {
     std::string footerText = "Press ESC to return";
     int footerX = (SCREEN_WIDTH - MeasureText(footerText.c_str(), 20)) / 2;
     DrawText(footerText.c_str(), footerX, 520, 20, GRAY);
+}
+
+void Renderer::DrawVictoryScreen(int score, float playTimer) {
+    ClearBackground(BLACK);
+
+    // 1. Draw the Title
+    const char* title = "CONGRATULATIONS! YOU WON!";
+    int titleX = (SCREEN_WIDTH - MeasureText(title, 40)) / 2;
+    DrawText(title, titleX, 150, 40, GOLD);
+
+    // 2. Draw the Final Score
+    std::string scoreText = "FINAL SCORE: " + std::to_string(score);
+    int scoreX = (SCREEN_WIDTH - MeasureText(scoreText.c_str(), 30)) / 2;
+    DrawText(scoreText.c_str(), scoreX, 250, 30, RAYWHITE);
+
+    // 3. Draw the Time Taken
+    std::string timeText = "TIME TAKEN: " + std::to_string((int)playTimer) + " seconds";
+    int timeX = (SCREEN_WIDTH - MeasureText(timeText.c_str(), 30)) / 2;
+    DrawText(timeText.c_str(), timeX, 300, 30, RAYWHITE);
+
+    // 4. Draw the Prompt to leave
+    const char* prompt = "Press ENTER to return to Main Menu";
+    int promptX = (SCREEN_WIDTH - MeasureText(prompt, 20)) / 2;
+    DrawText(prompt, promptX, 450, 20, GRAY);
 }

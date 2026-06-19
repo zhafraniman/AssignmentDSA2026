@@ -13,6 +13,7 @@ public:
     ~Renderer();
     void DrawFrame(GameState state, Player& player, GameMap& map, DialogueBox& dialogueBox,
                      int score, int menuSelection, const std::string& nameInput, ScoreEntry* leaderboard, int lbCount);
+    void DrawVictoryScreen(int score, float playTimer);
 
 private:
     void DrawOverworld(Player& player, GameMap& map);

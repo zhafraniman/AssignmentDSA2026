@@ -45,7 +45,8 @@ enum GameState {
     STATE_OVERWORLD,
     STATE_BATTLE,
     STATE_MENU,
-    STATE_DIALOGUE
+    STATE_DIALOGUE,
+    STATE_VICTORY
 };
 
 static const Color BgColor = {30, 30, 46, 255};     
