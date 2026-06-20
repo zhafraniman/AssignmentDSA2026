@@ -2,6 +2,9 @@
 
 # Project Planned: RPG Game (SegFault)
 
+<img width="1584" height="1232" alt="gamelogichirarchy" src="https://github.com/user-attachments/assets/b22ea5ec-6f50-4e51-bfca-323ed4ddc5c9" />
+
+
 > [!IMPORTANT]
 > **Use ```make windows```, ```make linux``` to compile the code**
 
