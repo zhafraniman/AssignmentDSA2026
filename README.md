@@ -1,6 +1,11 @@
-## Data Structures And Algorithms Group Assignments 
 
-# Project Planned: RPG Game (SegFault)
+# Data Structures And Algorithms Group Assignments 
+
+## Project Planned: RPG Game (SegFault)
+<img width="1584" height="1232" alt="gamelogichirarchy" src="https://github.com/user-attachments/assets/7b678070-a3a7-42a2-b29c-56f533bee4f1" />
+
+## [Documentation (Google Docs)](https://docs.google.com/document/d/1PfxYm6z618VuIBea9-IZOxNvSm35JHu_nA49DuNBKIo/edit?usp=sharing)
+
 
 > [!IMPORTANT]
 > **Use ```make windows```, ```make linux``` to compile the code**
@@ -40,7 +45,7 @@ Atleast 4 of these:
 - [x] Stack (Boss "rage charge" combo system in Boss.cpp)
 - [x] Linked-List (Inventory System)
 - [x] Tree (Boss decision tree / AI brain in Boss.cpp)
-- [ ] Sorting
+- [x] Sorting (Bubble sort for leaderboard)
 - [x] Searching (BFS for enemy detection)
 #### Post Implementation
 ##### Team Portfolio
