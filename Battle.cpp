@@ -290,7 +290,7 @@ void BattleSystem::StartBossBattle(std::string name, int maxHp, int attack, int 
     
     currentExpReward = expReward;
     currentScoreReward = scoreReward;
-    battleMessage = enemyname + "awakens. It will attack with Stacks, Trees and Queues!";
+    battleMessage = enemyname + " awakens. It will attack with Stacks, Trees and Queues!";
 
     boss.Reset();                 // empty the attack queue + rage stack
 
