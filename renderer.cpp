@@ -1,9 +1,10 @@
 #include "renderer.h"
  
 Renderer::Renderer() {
-    InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Adding a Background");
+    InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "SegFault");
     SetTargetFPS(60);
     SetExitKey(0); // Disable ESC closing the window (handled in-game)
+    InitAudioDevice();
     bgTexture = LoadTexture("src/sprite/background.png");
     titleSprite = LoadTexture("src/sprite/title.png");
 }
@@ -11,6 +12,7 @@ Renderer::Renderer() {
 Renderer::~Renderer() {
     UnloadTexture(bgTexture);
     UnloadTexture(titleSprite);
+    CloseAudioDevice();
     CloseWindow();
 }
  

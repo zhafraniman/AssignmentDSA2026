@@ -1,4 +1,5 @@
 #include "game.h"
+#include "audio.h"
 #include "config.h"
 #include <fstream>
 #include <raylib.h>
@@ -6,6 +7,7 @@
 // --- INITIALIZATION ---
 Game::Game() : myPlayer(0.0f, 0.0f) {
     worldMap.LoadMap("src/levels/spawn.txt");
+    audio.LoadFiles();
 
     myPlayer.Teleport(worldMap.defaultSpawnX, worldMap.defaultSpawnY);
 
@@ -55,6 +57,8 @@ void Game::ProcessInput() {
 // --- GAME LOGIC ---
 void Game::Update() {
     // Only tick the timer if we are actually playing the game
+    audio.UpdateMusic();
+
     if (currentState == STATE_OVERWORLD || currentState == STATE_BATTLE) {
         playTimer += GetFrameTime();
     }
@@ -112,6 +116,7 @@ void Game::Update() {
                 battle.ResetPlayerStats();                                                     // 4. Reset battle HP/Attack
                 fileScore = 0;
                 playTimer = 0.0f;
+                audio.PlayOverworldMusic();
                 currentState = STATE_OVERWORLD;
             } 
             
@@ -133,6 +138,8 @@ void Game::Update() {
         // ============================================================
         case STATE_OVERWORLD: {
 
+            
+
             myPlayer.Update(worldMap, playerInput);
 
             worldMap.UpdateEnemies(myPlayer.GetBounds());
@@ -146,15 +153,20 @@ void Game::Update() {
             if (touchedEnemy != nullptr) {
                 currentEnemy = touchedEnemy;
 
+                
+
                 if (touchedEnemy->typeID == 999) {
+                    audio.PlayBattleMusic();
                     battle.StartBossBattle(
                         touchedEnemy->name, 
                         touchedEnemy->maxHp, 
                         touchedEnemy->attack, 
                         touchedEnemy->expReward, 
                         touchedEnemy->scoreReward
+                        
                     );
                 } else {
+                    audio.PlayBattleMusic();
                     battle.StartBattle(
                         touchedEnemy->name, 
                         touchedEnemy->maxHp, 
@@ -181,6 +193,7 @@ void Game::Update() {
                     !nearbyChest->isOpen) {
 
                     if (myPlayer.AddItem(nearbyChest->content)) {
+                        audio.PlayChestOpen();
 
                         worldMap.MarkChestOpened(nearbyChest);
 
@@ -430,6 +443,9 @@ void Game::Update() {
 
                 if (IsKeyPressed(KEY_SPACE) ||
                     IsKeyPressed(KEY_ESCAPE)) {
+
+                    audio.StopBattleMusic();         // Kill the battle music entirely
+                    audio.ResumeOverworldMusic();  // Unfreeze the map music!
 
                     // ------------------------------------------------
                     // PLAYER LOST

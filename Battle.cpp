@@ -1,5 +1,6 @@
 #include "Battle.h"
 #include "config.h"
+#include "audio.h"
 #include <cstdlib>
 #include <ctime>
  
@@ -38,6 +39,7 @@ BattleSystem::BattleSystem() {
 // COMBAT ACTIONS
 // ------------------------------------------------------------
 void BattleSystem::Player_Damage(Player& player) {
+    AudioManager::PlayHitSound();
     int damage = GetActualPlayerDamage() + (rand() % 8);
     enemyHp -= damage;
  
@@ -55,6 +57,7 @@ void BattleSystem::Player_Damage(Player& player) {
 }
  
 void BattleSystem::Enemy_Damage(Player& player) {
+    AudioManager::PlayHitSound();
     int damage = enemyAttack + (rand() % 4);
  
     if (playerDefending) {
@@ -263,6 +266,10 @@ void BattleSystem::StartBattle(std::string name, int maxHp, int attack, int expR
     
     currentExpReward = expReward;
     currentScoreReward = scoreReward;
+
+    AudioManager::PauseOverworldMusic();
+    AudioManager::PlayBattleMusic();
+    
     
     // Personalize the entry message
     battleMessage = "A wild " + enemyname + " appeared!";

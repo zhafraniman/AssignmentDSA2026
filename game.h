@@ -7,6 +7,7 @@
 #include "dialogue.h"
 #include "Battle.h"
 #include "Items.h"
+#include "audio.h"
 
 class Game {
 public:
@@ -27,6 +28,7 @@ private:
     // Game State and Objects
     Renderer gameRenderer;
     GameMap worldMap;
+    AudioManager audio;
     Player myPlayer;
     DialogueBox dialogueBox;
     BattleSystem battle;

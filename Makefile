@@ -1,6 +1,6 @@
 # Variables
 CXX = g++
-SRCS = main.cpp game.cpp player.cpp renderer.cpp dialogue.cpp map.cpp Battle.cpp Inventory.cpp Boss.cpp
+SRCS = main.cpp game.cpp player.cpp renderer.cpp dialogue.cpp map.cpp Battle.cpp Inventory.cpp Boss.cpp audio.cpp
 
 # Linux Output and Flags
 LINUX_OUT = game
