@@ -26,6 +26,7 @@ Game::Game() : myPlayer(0.0f, 0.0f) {
 
 // --- CLEANUP ---
 Game::~Game() {
+    AudioManager::CleanUp();
 }
 
 // --- MAIN LOOP ---
@@ -35,6 +36,17 @@ void Game::Run() {
         Update();
         Draw();
     }
+}
+
+void Game::EnterBattle() {
+    AudioManager::PauseOverworldMusic();
+    AudioManager::PlayBattleMusic();
+    currentState = STATE_BATTLE;
+}
+ 
+void Game::ExitBattle() {
+    AudioManager::StopBattleMusic();
+    AudioManager::ResumeOverworldMusic();
 }
 
 // --- INPUT HANDLING ---
@@ -176,7 +188,7 @@ void Game::Update() {
                     );
                 }
 
-                currentState = STATE_BATTLE;
+                EnterBattle();
                 break;
             }
 
@@ -362,7 +374,7 @@ void Game::Update() {
                 // Start the battle using the dummy's stats
                 battle.StartBossBattle(debugBoss.name, debugBoss.maxHp, debugBoss.attack, debugBoss.expReward, debugBoss.scoreReward);
 
-                currentState = STATE_BATTLE;
+                EnterBattle();
             }
 
             // --------------------------------------------------------
@@ -374,7 +386,7 @@ void Game::Update() {
 
                 currentEnemy = nullptr;
 
-                currentState = STATE_BATTLE;
+                EnterBattle();
             }
 
             // --------------------------------------------------------
@@ -444,8 +456,7 @@ void Game::Update() {
                 if (IsKeyPressed(KEY_SPACE) ||
                     IsKeyPressed(KEY_ESCAPE)) {
 
-                    audio.StopBattleMusic();         // Kill the battle music entirely
-                    audio.ResumeOverworldMusic();  // Unfreeze the map music!
+                    ExitBattle();
 
                     // ------------------------------------------------
                     // PLAYER LOST

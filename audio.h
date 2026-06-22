@@ -9,6 +9,9 @@ private:
     static Sound hitSound;
     static Sound chestOpen;
 
+    static bool overworldActive;
+    static bool battleActive;
+
 public:
     static void Init();  
     static void CleanUp(); 

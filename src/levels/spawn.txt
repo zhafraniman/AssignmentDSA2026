@@ -21,7 +21,7 @@ GRID
 SPAWN 7 15
 
 PORTAL 12 17 src/levels/lobby.txt 12 1 UNLOCKED 0
-PORTAL 12 0 src/levels/arena.txt 12 16 LOCKED 15
+PORTAL 12 0 src/levels/arena.txt 12 16 LOCKED 8
 PORTAL 1 8 src/levels/debug.txt 12 16 LOCKED 505
 
 GATE 7 11 401 5

@@ -21,6 +21,9 @@ private:
     void Update();       // Game logic (moving, opening chests)
     void Draw();         // Rendering
 
+    void EnterBattle();
+    void ExitBattle();
+
     // Values
     int fileScore;
     float playTimer;
